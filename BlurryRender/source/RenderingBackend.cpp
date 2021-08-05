@@ -118,18 +118,24 @@ void RenderingBackend::Render()
   glBindVertexArray(0);
 
   // back to default framebuffer and draw a quad plane
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glDisable(GL_DEPTH_TEST);
+  m_postProcessShader.use();
+  glBindVertexArray(m_quad.VAO);
+  //m_postProcessShader.setUniform("applyGradient", m_postProcessingGradient);
+  //m_postProcessShader.setUniform("applyBlur", m_postProcessingBlur);
+  m_postProcessShader.setUniform("horizontal", 1);
+  m_postProcessShader.setUniform("samples", 15);
+  m_postProcessShader.setUniform("sigmaFactor", 0.25f);
+  // use the color attachment texture as the texture of the quad plane
+  glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
+  glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
   // clear all relevant buffers
   glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
-
-  m_postProcessShader.use();
-  glBindVertexArray(m_quad.VAO);
-  m_postProcessShader.setUniform("applyGradient", m_postProcessingGradient);
-  m_postProcessShader.setUniform("applyBlur", m_postProcessingBlur);
-  // use the color attachment texture as the texture of the quad plane
-  glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
+  m_postProcessShader.setUniform("horizontal", 0);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
 }
 

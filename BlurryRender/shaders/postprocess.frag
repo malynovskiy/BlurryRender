@@ -1,55 +1,66 @@
+
 #version 450 core
 out vec4 FragColor;
 
 in vec2 TexCoords;
 
 uniform sampler2D screenTexture;
-uniform bool applyGradient;
-uniform bool applyBlur;
+uniform int horizontal;
+uniform int samples;
+uniform float sigmaFactor;
 
-const float offset = 1.0 / 300.0;  
+const float pi = 3.1415926;
 
-const int kernelSize = 9;
+float sigma = float(samples) * sigmaFactor;
+float s = 2 * sigma * sigma; 
+float s0 = pi * s; 
+
+float gauss(float r)
+{
+  return exp(-r * r / s) / s0;
+}
+
+vec3 gaussianBlur(sampler2D sp, vec2 uv, vec2 scale, int hor)
+{
+  vec3 pixel = vec3(0.0);
+  float weightSum = 0.0;
+  float weight;
+  vec2 offset;
+
+  if(hor == 1)
+  {
+    for(int j = -samples / 2; j < samples / 2; j++)
+    {
+        offset = vec2(0, j);
+        weight = gauss(j);
+        pixel += texture(screenTexture, uv + scale * offset).rgb * weight;
+        weightSum += weight;
+    }
+  }
+  if(hor == 0)
+  {
+    for(int i = -samples / 2; i < samples / 2; i++)
+      {
+          offset = vec2(i, 0);
+          weight = gauss(i);
+          pixel += texture(screenTexture, uv + scale * offset).rgb * weight;
+          weightSum += weight;
+      }
+  }
+  return pixel / weightSum;
+}
 
 void main()
 {
-    vec2 offsets[9] = vec2[](
-        vec2(-offset,  offset), // top-left
-        vec2( 0.0f,    offset), // top-center
-        vec2( offset,  offset), // top-right
-        vec2(-offset,  0.0f),   // center-left
-        vec2( 0.0f,    0.0f),   // center-center
-        vec2( offset,  0.0f),   // center-right
-        vec2(-offset, -offset), // bottom-left
-        vec2( 0.0f,   -offset), // bottom-center
-        vec2( offset, -offset)  // bottom-right    
-    );
-
-    float kernel[kernelSize] = float[](
-      1.0 / 16, 2.0 / 16, 1.0 / 16,
-      2.0 / 16, 4.0 / 16, 2.0 / 16,
-      1.0 / 16, 2.0 / 16, 1.0 / 16  
-    );
-    
-    vec3 result = vec3(0.0);
-    vec3 sampleTex[kernelSize];
-    
-    if(applyBlur)
-    {
-      for(int i = 0; i < kernelSize; i++)
-      {
-        sampleTex[i] = vec3(texture(screenTexture, TexCoords.st + offsets[i]));
-        result += sampleTex[i] * kernel[i];
-      }
-
-      if(applyGradient)
-        FragColor = vec4(mix(vec3(texture(screenTexture, TexCoords)), result, TexCoords.s), 1.0);
-      else
-        FragColor = vec4(result, 1.0);
-    }
-    else
-    {
-      FragColor = vec4(vec3(texture(screenTexture, TexCoords)), 1.0);
-    }
+  vec2 ps = vec2(1.0) / vec2(1920.0,1080.0);
+  if(TexCoords.x > 0.5)
+  {
+    vec3 bluredTexture = gaussianBlur(screenTexture, TexCoords, ps, horizontal);
+    FragColor = vec4(bluredTexture.rgb, 1.0);
+  }  
+  else
+  {
+    FragColor = vec4(texture(screenTexture, TexCoords).rgb, 1.0);
+  }
 }
 

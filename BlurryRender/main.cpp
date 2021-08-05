@@ -69,7 +69,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
   ShowWindow(hWnd, SW_SHOW);
   UpdateWindow(hWnd);
 
-  // renderer = std::make_unique<RenderingBackend>(WindowWidth, WindowHeight);
   renderer.Initialize();
   renderer.SetCameraPosition(glm::vec3(0.0f, 0.0f, 3.0f));
 

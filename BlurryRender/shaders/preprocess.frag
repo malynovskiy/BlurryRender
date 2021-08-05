@@ -12,7 +12,7 @@ void main()
                   floor(aColor.y*size.y);
 
     bool isEven = mod(total,2.0)==0.0;
-    vec4 col1 = vec4(1.0,0.0,0.0,1.0);
+    vec4 col1 = vec4(0.5,0.5,0.5,1.0);
     vec4 col2 = vec4(1.0,1.0,1.0,1.0);
     FragColor = (isEven)? col1:col2;
 }
