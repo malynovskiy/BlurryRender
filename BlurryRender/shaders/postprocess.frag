@@ -5,6 +5,8 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D screenTexture;
+uniform sampler2D maskTexture;
+
 uniform int horizontal;
 uniform int samples;
 uniform float sigmaFactor;
@@ -53,14 +55,9 @@ vec3 gaussianBlur(sampler2D sp, vec2 uv, vec2 scale, int hor)
 void main()
 {
   vec2 ps = vec2(1.0) / vec2(1920.0,1080.0);
-  if(TexCoords.x > 0.5)
-  {
-    vec3 bluredTexture = gaussianBlur(screenTexture, TexCoords, ps, horizontal);
-    FragColor = vec4(bluredTexture.rgb, 1.0);
-  }  
-  else
-  {
-    FragColor = vec4(texture(screenTexture, TexCoords).rgb, 1.0);
-  }
+
+  vec3 bluredTexture = gaussianBlur(screenTexture, TexCoords, ps, horizontal);
+
+  FragColor = vec4(mix(bluredTexture, texture(screenTexture, TexCoords).rgb, texture(maskTexture, TexCoords).r), 1.0);
 }
 

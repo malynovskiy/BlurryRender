@@ -34,6 +34,7 @@ void RenderingBackend::Initialize()
   // load textures
   m_cubeTexture = Utility::LoadTextureFromImage("resources/textures/container.jpg");
   m_planeTexture = Utility::LoadTextureFromImage("resources/textures/back.jpg");
+  m_maskTexture = Utility::LoadTextureFromImage("resources/textures/gradient_mask.png");
 
   // shader configuration
   m_sceneShader.use();
@@ -41,6 +42,7 @@ void RenderingBackend::Initialize()
 
   m_postProcessShader.use();
   m_postProcessShader.setUniform("screenTexture", 0);
+  m_postProcessShader.setUniform("maskTexture", 1);
 
   // framebuffer configuration
   m_framebuffer = 0;
@@ -127,9 +129,11 @@ void RenderingBackend::Render()
   m_postProcessShader.setUniform("samples", 15);
   m_postProcessShader.setUniform("sigmaFactor", 0.25f);
   // use the color attachment texture as the texture of the quad plane
+  glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D, m_maskTexture);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
-
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   // clear all relevant buffers

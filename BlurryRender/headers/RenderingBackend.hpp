@@ -42,6 +42,7 @@ private:
 
   UINT m_cubeTexture;
   UINT m_planeTexture;
+  UINT m_maskTexture;
 
   std::vector<Model> m_models;
 
