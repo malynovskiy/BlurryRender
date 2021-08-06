@@ -1,4 +1,3 @@
-
 #version 450 core
 out vec4 FragColor;
 
@@ -7,6 +6,8 @@ in vec2 TexCoords;
 uniform sampler2D screenTexture;
 uniform sampler2D maskTexture;
 
+uniform vec2 resolution;
+
 uniform int horizontal;
 uniform int samples;
 uniform float sigmaFactor;
@@ -14,50 +15,43 @@ uniform float sigmaFactor;
 const float pi = 3.1415926;
 
 float sigma = float(samples) * sigmaFactor;
-float s = 2 * sigma * sigma; 
-float s0 = pi * s; 
+float s = 2 * sigma * sigma;
+float s0 = pi * s;
 
-float gauss(float r)
+float GaussianFilter(float r)
 {
   return exp(-r * r / s) / s0;
 }
 
-vec3 gaussianBlur(sampler2D sp, vec2 uv, vec2 scale, int hor)
+vec3 GaussianBlur(sampler2D sp, vec2 uv, vec2 scale, int hor)
 {
   vec3 pixel = vec3(0.0);
   float weightSum = 0.0;
-  float weight;
-  vec2 offset;
+  vec2 direction;
 
-  if(hor == 1)
+  if (hor == 1)
+    direction = vec2(0, 1);
+  else
+    direction = vec2(1, 0);
+
+  for (int i = -samples / 2; i < samples / 2; i++)
   {
-    for(int j = -samples / 2; j < samples / 2; j++)
-    {
-        offset = vec2(0, j);
-        weight = gauss(j);
-        pixel += texture(screenTexture, uv + scale * offset).rgb * weight;
-        weightSum += weight;
-    }
-  }
-  if(hor == 0)
-  {
-    for(int i = -samples / 2; i < samples / 2; i++)
-      {
-          offset = vec2(i, 0);
-          weight = gauss(i);
-          pixel += texture(screenTexture, uv + scale * offset).rgb * weight;
-          weightSum += weight;
-      }
+    float weight = GaussianFilter(i);
+    vec2 offset = direction * i;
+    pixel += texture(screenTexture, uv + scale * offset).rgb * weight;
+    weightSum += weight;
   }
   return pixel / weightSum;
 }
 
 void main()
 {
-  vec2 ps = vec2(1.0) / vec2(1920.0,1080.0);
+  vec2 ps = vec2(1.0) / resolution;
 
-  vec3 bluredTexture = gaussianBlur(screenTexture, TexCoords, ps, horizontal);
+  vec3 bluredTexture = GaussianBlur(screenTexture, TexCoords, ps, horizontal);
 
-  FragColor = vec4(mix(bluredTexture, texture(screenTexture, TexCoords).rgb, texture(maskTexture, TexCoords).r), 1.0);
+  vec3 screenPixel = texture(screenTexture, TexCoords).rgb;
+  float maskValue = texture(maskTexture, TexCoords).r;
+
+  FragColor = vec4(mix(bluredTexture, screenPixel, maskValue), 1.0);
 }
-

@@ -37,10 +37,15 @@ void RenderingBackend::Initialize()
   m_maskTexture = Utility::LoadTextureFromImage("resources/textures/gradient_mask.png");
 
   // shader configuration
+  m_preProcessShader.use();
+  glm::vec2 resolution = glm::vec2(static_cast<float>(m_width), static_cast<float>(m_height));
+  m_preProcessShader.setUniform("resolution", resolution);
+
   m_sceneShader.use();
-  m_sceneShader.setUniform("texture1", 0);
+  m_sceneShader.setUniform("objectTexture", 0);
 
   m_postProcessShader.use();
+  m_postProcessShader.setUniform("resolution", resolution);
   m_postProcessShader.setUniform("screenTexture", 0);
   m_postProcessShader.setUniform("maskTexture", 1);
 
