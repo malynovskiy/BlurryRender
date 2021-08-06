@@ -6,6 +6,7 @@
 #include <string>
 #include <cassert>
 #include <iostream>
+#include <Windows.h>
 
 ShaderProgram::ShaderProgram(std::string vertexPath, std::string fragmentPath) : m_descriptor(0)
 {
@@ -48,17 +49,21 @@ GLuint ShaderProgram::CreateShader(std::string shaderPath, unsigned int type)
   glShaderSource(shader, 1, &cShaderCode, nullptr);
   glCompileShader(shader);
 
-  char infoLog[512];
+  //char infoLog[512];
+  std::string infoLog;
+  infoLog.resize(512);
   int success{};
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
   assert(success);
   if (!success)
   {
-    glGetShaderInfoLog(shader, 512, nullptr, infoLog);
+    glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
     const std::string shaderTypeStr = (type == GL_VERTEX_SHADER) ? "vertex" : "fragment";
-    std::cerr << "\GLSL compile error" << shaderTypeStr << " shader: '" << shaderPath << "'\n\n";
-    std::cerr << "Shader info log:\n" << infoLog << '\n';
+    std::string output = "";
+    output += "\GLSL compile error" + shaderTypeStr + " shader: '" + shaderPath + "'\n\n";
+    output += "Shader info log:\n" + infoLog + '\n';
+    OutputDebugStringA(output.c_str());
   }
 
   return shader;
