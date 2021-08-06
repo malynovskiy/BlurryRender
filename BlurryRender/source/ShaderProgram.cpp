@@ -8,6 +8,8 @@
 #include <iostream>
 #include <Windows.h>
 
+inline constexpr UINT InfoBufferSize = 512;
+
 ShaderProgram::ShaderProgram(std::string vertexPath, std::string fragmentPath) : m_descriptor(0)
 {
   Initialize(vertexPath, fragmentPath);
@@ -28,11 +30,14 @@ void ShaderProgram::Initialize(std::string vertexPath, std::string fragmentPath)
   glGetProgramiv(m_descriptor, GL_LINK_STATUS, &success);
   if (!success)
   {
-    char infoLog[512];
-    glGetProgramInfoLog(m_descriptor, 512, nullptr, infoLog);
+    std::string infoLog;
+    infoLog.resize(InfoBufferSize);
+    glGetProgramInfoLog(m_descriptor, InfoBufferSize, nullptr, infoLog.data());
 
-    std::cerr << "\Failed linkage of GLSL shaders into a shader program." << '\n';
-    std::cerr << "Program info log:" << '\n' << infoLog << '\n';
+    std::string output = "";
+    output += "\Failed linkage of GLSL shaders into a shader program." + '\n';
+    output += "Program info log:\n" + infoLog + '\n';
+    OutputDebugStringA(output.c_str());
   }
 
   // shaders linked to our program and no longer need to keep them
@@ -49,16 +54,15 @@ GLuint ShaderProgram::CreateShader(std::string shaderPath, unsigned int type)
   glShaderSource(shader, 1, &cShaderCode, nullptr);
   glCompileShader(shader);
 
-  //char infoLog[512];
   std::string infoLog;
-  infoLog.resize(512);
+  infoLog.resize(InfoBufferSize);
   int success{};
   glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 
   assert(success);
   if (!success)
   {
-    glGetShaderInfoLog(shader, 512, nullptr, infoLog.data());
+    glGetShaderInfoLog(shader, InfoBufferSize, nullptr, infoLog.data());
     const std::string shaderTypeStr = (type == GL_VERTEX_SHADER) ? "vertex" : "fragment";
     std::string output = "";
     output += "\GLSL compile error" + shaderTypeStr + " shader: '" + shaderPath + "'\n\n";
