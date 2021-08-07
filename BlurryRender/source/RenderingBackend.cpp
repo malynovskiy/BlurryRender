@@ -27,9 +27,9 @@ void RenderingBackend::Initialize()
   m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
   m_postProcessShader = ShaderProgram(PostProcessVertexShaderPath, PostProcessFragmentShaderPath);
 
-  m_cube = Primitive(CubeVertices, CubeVerticesAmount * PrimitiveVertexAttributes);
-  m_plane = Primitive(PlaneVertices, PlaneVerticesAmount * PrimitiveVertexAttributes);
-  m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PrimitiveVertexAttributes);
+  m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
+  m_plane = Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
+  m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PositionTextureAttrib, Primitive::PositionTexture);
 
   // load textures
   m_cubeTexture = Utility::LoadTextureFromImage("resources/textures/container.jpg");
@@ -162,6 +162,23 @@ void RenderingBackend::OnKeyDown(UINT key)
 {
   switch (key)
   {
+  case 'W': {
+    m_camera.ProcessKeyboard(FORWARD, 0.1);
+  }
+  break;
+  case 'A': {
+    m_camera.ProcessKeyboard(LEFT, 0.1);
+  }
+  break;
+  case 'S': {
+    m_camera.ProcessKeyboard(BACKWARD, 0.1);
+  }
+  break;
+  case 'D': {
+    m_camera.ProcessKeyboard(RIGHT, 0.1);
+  }
+  break;
+
   case 'G': {
     m_postProcessingGradient = !m_postProcessingGradient;
   }
