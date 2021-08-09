@@ -31,8 +31,8 @@ private:
   void RenderPostProcessing();
 
 private:
-  ShaderProgram m_preProcessShader;
-  ShaderProgram m_postProcessShader;
+  ShaderProgram m_backgroundShader;
+  ShaderProgram m_blurShader;
   ShaderProgram m_sceneShader;
   ShaderProgram m_lightSourceShader;
   ShaderProgram m_composeShader;
@@ -40,8 +40,8 @@ private:
   bool m_postProcessingBlur = true;
   bool m_horizontal = true;
 
-  UINT m_framebuffer;
-  UINT m_textureColorbuffer;
+  UINT m_sceneFBO;
+  UINT m_sceneColorBuffer;
   std::array<UINT, 2> m_blurFBO;
   std::array<UINT, 2> m_blurColorBuffers;
 

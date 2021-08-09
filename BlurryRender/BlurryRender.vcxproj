@@ -107,12 +107,12 @@
     <None Include="shaders\compose.vert" />
     <None Include="shaders\light_source.frag" />
     <None Include="shaders\light_source.vert" />
-    <None Include="shaders\preprocess.frag" />
-    <None Include="shaders\preprocess.vert" />
+    <None Include="shaders\chessboard.frag" />
+    <None Include="shaders\chessboard.vert" />
     <None Include="shaders\scene.frag" />
     <None Include="shaders\scene.vert" />
-    <None Include="shaders\postprocess.frag" />
-    <None Include="shaders\postprocess.vert" />
+    <None Include="shaders\blur.frag" />
+    <None Include="shaders\blur.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,12 +8,12 @@
 // TODO: Need to be fixed later
 namespace
 {
-constexpr auto PreProcessVertexShaderPath = "shaders/preprocess.vert";
-constexpr auto PreProcessFragmentShaderPath = "shaders/preprocess.frag";
+constexpr auto BlurVertexShaderPath = "shaders/chessboard.vert";
+constexpr auto BlurFragmentShaderPath = "shaders/chessboard.frag";
 constexpr auto SceneVertexShaderPath = "shaders/scene.vert";
 constexpr auto SceneFragmentShaderPath = "shaders/scene.frag";
-constexpr auto PostProcessVertexShaderPath = "shaders/postprocess.vert";
-constexpr auto PostProcessFragmentShaderPath = "shaders/postprocess.frag";
+constexpr auto BackgroundVertexShaderPath = "shaders/blur.vert";
+constexpr auto BackgroundFragmentShaderPath = "shaders/blur.frag";
 constexpr auto LightSourceVertexShaderPath = "shaders/light_source.vert";
 constexpr auto LightSourceFragmentShaderPath = "shaders/light_source.frag";
 constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
@@ -27,14 +27,15 @@ RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_
 
 void RenderingBackend::Initialize()
 {
-  m_preProcessShader = ShaderProgram(PreProcessVertexShaderPath, PreProcessFragmentShaderPath);
+  m_backgroundShader = ShaderProgram(BlurVertexShaderPath, BlurFragmentShaderPath);
   m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
-  m_postProcessShader = ShaderProgram(PostProcessVertexShaderPath, PostProcessFragmentShaderPath);
+  m_blurShader = ShaderProgram(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
   m_lightSourceShader = ShaderProgram(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
   m_composeShader = ShaderProgram(ComposeVertShaderPath, ComposeFragShaderPath);
 
   m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
-  m_plane = Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
+  m_plane =
+    Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
   m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PositionTextureAttrib, Primitive::PositionTexture);
   m_lightSource = LightPrimitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib);
 
@@ -44,40 +45,38 @@ void RenderingBackend::Initialize()
   m_maskTexture = Utility::LoadTextureFromImage("resources/textures/gradient_mask.png");
 
   // shader configuration
-  m_preProcessShader.use();
+  m_backgroundShader.use();
   glm::vec2 resolution = glm::vec2(static_cast<float>(m_width), static_cast<float>(m_height));
-  m_preProcessShader.setUniform("resolution", resolution);
+  m_backgroundShader.setUniform("resolution", resolution);
 
   m_sceneShader.use();
   m_sceneShader.setUniform("objectTexture", 0);
 
-  m_postProcessShader.use();
-  m_postProcessShader.setUniform("resolution", resolution);
-  m_postProcessShader.setUniform("screenTexture", 0);
-  m_postProcessShader.setUniform("maskTexture", 1);
+  m_blurShader.use();
+  m_blurShader.setUniform("resolution", resolution);
+  m_blurShader.setUniform("screenTexture", 0);
+  m_blurShader.setUniform("maskTexture", 1);
 
   m_composeShader.setUniform("screenTexture", 0);
 
   // Background framebuffer configuration
-  glGenFramebuffers(1, &m_framebuffer);
-  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
-  glGenTextures(1, &m_textureColorbuffer);
-  glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
+  glGenFramebuffers(1, &m_sceneFBO);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+  glGenTextures(1, &m_sceneColorBuffer);
+  glBindTexture(GL_TEXTURE_2D, m_sceneColorBuffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
   // attach texture to framebuffer
-  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_textureColorbuffer, 0);
+  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_sceneColorBuffer, 0);
 
   UINT rbo{};
   glGenRenderbuffers(1, &rbo);
   glBindRenderbuffer(GL_RENDERBUFFER, rbo);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
-  //PROBABLY ISSUE HERE
-  //glDrawBuffers(1, GL_COLOR_ATTACHMENT0);
   W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cerr << "Error, Framebuffer is not complete!\n";
@@ -98,12 +97,12 @@ void RenderingBackend::Initialize()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_blurColorBuffers[i], 0);
-    
+
     W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
       std::cerr << "Error, Framebuffer is not complete!\n";
   }
-  
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   stbi_set_flip_vertically_on_load(true);
@@ -115,11 +114,11 @@ void RenderingBackend::Initialize()
 
 void RenderingBackend::RenderBackground()
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glDisable(GL_DEPTH_TEST);
-  m_preProcessShader.use();
+  m_backgroundShader.use();
   glBindVertexArray(m_quad.VAO);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
   glEnable(GL_DEPTH_TEST);
@@ -128,7 +127,7 @@ void RenderingBackend::RenderBackground()
 
 void RenderingBackend::RenderScene()
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
 
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
@@ -183,17 +182,17 @@ void RenderingBackend::RenderScene()
 void RenderingBackend::RenderPostProcessing()
 {
   bool first_iteration = true;
-  m_postProcessShader.use();
-  m_postProcessShader.setUniform("samples", 5);
-  m_postProcessShader.setUniform("sigmaFactor", 0.25f);
+  m_blurShader.use();
+  m_blurShader.setUniform("samples", 5);
+  m_blurShader.setUniform("sigmaFactor", sigmaFactor);
   glBindVertexArray(m_quad.VAO);
   for (size_t i = 0; i < BlurPasses; i++)
   {
     glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[m_horizontal]);
-    m_postProcessShader.setUniform("horizontal", m_horizontal);
+    m_blurShader.setUniform("horizontal", m_horizontal);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, first_iteration ? m_textureColorbuffer : m_blurColorBuffers[!m_horizontal]);
+    glBindTexture(GL_TEXTURE_2D, first_iteration ? m_sceneColorBuffer : m_blurColorBuffers[!m_horizontal]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, m_maskTexture);
 
@@ -216,7 +215,7 @@ void RenderingBackend::Render()
   RenderScene();
   RenderPostProcessing();
 
-  // Composing everything into final framebuffer
+  // Composing everything into default framebuffer for presentation
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   m_composeShader.use();
@@ -238,7 +237,7 @@ void RenderingBackend::Cleanup()
   glDeleteBuffers(1, &m_lightSource.VBO);
 }
 
-namespace 
+namespace
 {
 void ProcessKeyboard(glm::vec3 &position, Camera_Movement direction, float deltaTime)
 {
@@ -258,7 +257,7 @@ void ProcessKeyboard(glm::vec3 &position, Camera_Movement direction, float delta
   if (direction == RIGHT)
     position += Right * velocity;
 }
-}
+}// namespace
 
 void RenderingBackend::OnKeyDown(UINT key)
 {
@@ -298,13 +297,32 @@ void RenderingBackend::OnKeyDown(UINT key)
   }
   break;
 
-  /*case 'G': {
-    m_horizontal = !m_horizontal;
+  case '1': {
+    BlurPasses -= 1;
   }
   break;
-  case 'B': {
-    m_postProcessingBlur = !m_postProcessingBlur;
+
+  case '2': {
+    BlurPasses += 1;
   }
-  break;*/
+  break;
+
+  case '3': {
+    sigmaFactor -= 0.1;
+  }
+  break;
+  
+  case '4': {
+    sigmaFactor += 0.1;
+  }
+  break;
+    /*case 'G': {
+      m_horizontal = !m_horizontal;
+    }
+    break;
+    case 'B': {
+      m_postProcessingBlur = !m_postProcessingBlur;
+    }
+    break;*/
   }
 }
