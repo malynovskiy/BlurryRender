@@ -20,8 +20,8 @@ constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
 constexpr auto ComposeFragShaderPath = "shaders/compose.frag";
 }// namespace
 
-float sigmaFactor = 0.25f;
-UINT BlurPasses = 20;
+float sigmaFactor = 0.4f;
+UINT BlurPasses = 25;
 
 RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
 
@@ -50,7 +50,14 @@ void RenderingBackend::Initialize()
   m_backgroundShader.setUniform("resolution", resolution);
 
   m_sceneShader.use();
-  m_sceneShader.setUniform("objectTexture", 0);
+  m_sceneShader.setUniform("material.diffuse", 0);
+  m_sceneShader.setUniform("material.specular", 0.6f, 0.6f, 0.5f);
+  m_sceneShader.setUniform("material.shininess", 8.0f);
+  glm::vec3 diffuseColor = glm::vec3(1.0, 1.0, 1.0) * glm::vec3(0.5f);
+  glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+  m_sceneShader.setUniform("light.ambient", ambientColor);
+  m_sceneShader.setUniform("light.diffuse", diffuseColor);
+  m_sceneShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
 
   m_blurShader.use();
   m_blurShader.setUniform("resolution", resolution);
@@ -72,11 +79,11 @@ void RenderingBackend::Initialize()
   // attach texture to framebuffer
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_sceneColorBuffer, 0);
 
-  UINT rbo{};
-  glGenRenderbuffers(1, &rbo);
-  glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+  UINT sceneDepthRBO{};
+  glGenRenderbuffers(1, &sceneDepthRBO);
+  glBindRenderbuffer(GL_RENDERBUFFER, sceneDepthRBO);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sceneDepthRBO);
   W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cerr << "Error, Framebuffer is not complete!\n";
@@ -135,8 +142,7 @@ void RenderingBackend::RenderScene()
   glm::mat4 projection = glm::perspective(glm::radians(m_camera.Zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
   m_sceneShader.setUniform("view", view);
   m_sceneShader.setUniform("projection", projection);
-  m_sceneShader.setUniform("lightColor", 1.0f, 1.0f, 1.0f);
-  m_sceneShader.setUniform("lightPos", m_lightPosition);
+  m_sceneShader.setUniform("light.position", m_lightPosition);
   m_sceneShader.setUniform("viewPos", m_camera.Position);
 
   // cubes
@@ -170,8 +176,8 @@ void RenderingBackend::RenderScene()
   m_lightSourceShader.setUniform("projection", projection);
   m_lightSourceShader.setUniform("view", view);
   model = glm::mat4(1.0f);
-  /* m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
-   m_lightPosition.y = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;*/
+  //m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
+  //m_lightPosition.z = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;
   model = glm::translate(model, m_lightPosition);
   model = glm::scale(model, glm::vec3(0.2f));
   m_lightSourceShader.setUniform("model", model);
@@ -183,7 +189,7 @@ void RenderingBackend::RenderPostProcessing()
 {
   bool first_iteration = true;
   m_blurShader.use();
-  m_blurShader.setUniform("samples", 5);
+  m_blurShader.setUniform("samples", 8);
   m_blurShader.setUniform("sigmaFactor", sigmaFactor);
   glBindVertexArray(m_quad.VAO);
   for (size_t i = 0; i < BlurPasses; i++)
@@ -311,7 +317,7 @@ void RenderingBackend::OnKeyDown(UINT key)
     sigmaFactor -= 0.1;
   }
   break;
-  
+
   case '4': {
     sigmaFactor += 0.1;
   }
