@@ -50,7 +50,7 @@ private:
   UINT m_planeTexture;
   UINT m_maskTexture;
 
-  std::vector<Model> m_models;
+  Model m_model;
 
   Camera m_camera;
   glm::vec3 m_lightPosition;

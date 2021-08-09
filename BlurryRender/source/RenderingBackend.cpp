@@ -18,9 +18,7 @@ constexpr auto LightSourceVertexShaderPath = "shaders/light_source.vert";
 constexpr auto LightSourceFragmentShaderPath = "shaders/light_source.frag";
 }// namespace
 
-RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera(), m_models(0)
-{
-}
+RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
 
 void RenderingBackend::Initialize()
 {
@@ -60,23 +58,26 @@ void RenderingBackend::Initialize()
   m_textureColorbuffer = 0;
   glGenTextures(1, &m_textureColorbuffer);
   glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  // attach texture to framebuffer
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_textureColorbuffer, 0);
 
-  unsigned int rbo;
+  UINT rbo{};
   glGenRenderbuffers(1, &rbo);
   glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_width, m_height);
-  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+  glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
+  glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     std::cerr << "Error, Framebuffer is not complete!\n";
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   stbi_set_flip_vertically_on_load(true);
   // TODO: cleanup hardcoded paths
-  m_models.push_back(Model("resources/models/backpack/backpack.obj"));
+  m_model = Model("resources/models/backpack/backpack.obj");
 
   m_lightPosition = glm::vec3(1.2f, 1.0f, 2.0f);
 }
@@ -132,8 +133,9 @@ void RenderingBackend::RenderScene()
   model = glm::translate(model, glm::vec3(1.4f, -0.2f, 0.3f));
   model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
   m_sceneShader.setUniform("model", model);
-  m_models[0].Draw(m_sceneShader);
+  m_model.Draw(m_sceneShader);
 
+  // Light source
   m_lightSourceShader.use();
   m_lightSourceShader.setUniform("projection", projection);
   m_lightSourceShader.setUniform("view", view);
