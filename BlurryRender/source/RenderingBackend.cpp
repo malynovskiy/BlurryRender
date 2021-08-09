@@ -21,7 +21,7 @@ constexpr auto ComposeFragShaderPath = "shaders/compose.frag";
 }// namespace
 
 float sigmaFactor = 0.25f;
-UINT BlurPasses = 10;
+UINT BlurPasses = 20;
 
 RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
 
