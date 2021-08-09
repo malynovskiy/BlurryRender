@@ -1,6 +1,6 @@
 #include "Utility.hpp"
 
-#include <windows.h>
+#include <Windows.h>
 #include <glad/glad.h>
 
 #include <fstream>
@@ -75,4 +75,10 @@ unsigned int LoadTextureFromImage(char const *path)
   stbi_image_free(data);
   return texture;
 }
+
+float GetElapsedTime()
+{
+  return static_cast<float>(GetCurrentTime() / 100);
+}
+
 }// namespace Utility
