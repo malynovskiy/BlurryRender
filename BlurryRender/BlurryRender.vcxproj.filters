@@ -60,5 +60,7 @@
     <None Include="shaders\postprocess.vert" />
     <None Include="shaders\light_source.vert" />
     <None Include="shaders\light_source.frag" />
+    <None Include="shaders\compose.vert" />
+    <None Include="shaders\compose.frag" />
   </ItemGroup>
 </Project>
