@@ -81,24 +81,23 @@ void RenderingBackend::Initialize()
   m_lightPosition = glm::vec3(1.2f, 1.0f, 2.0f);
 }
 
-void RenderingBackend::Render()
+void RenderingBackend::RenderBackground()
 {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
   glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // PREPROCESSING SHADER
-  //glDepthMask(GL_FALSE);
   glDisable(GL_DEPTH_TEST);
   m_preProcessShader.use();
   glBindVertexArray(m_quad.VAO);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
   glDepthMask(GL_TRUE);
+}
 
-  // DRAW ACTUAL SCENE
+void RenderingBackend::RenderScene()
+{
   glEnable(GL_DEPTH_TEST);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = m_camera.GetViewMatrix();
@@ -139,27 +138,27 @@ void RenderingBackend::Render()
   m_lightSourceShader.setUniform("projection", projection);
   m_lightSourceShader.setUniform("view", view);
   model = glm::mat4(1.0f);
- /* m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
-  m_lightPosition.y = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;*/
+  /* m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
+   m_lightPosition.y = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;*/
   model = glm::translate(model, m_lightPosition);
   model = glm::scale(model, glm::vec3(0.2f));
   m_lightSourceShader.setUniform("model", model);
   glBindVertexArray(m_lightSource.VAO);
   glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
+}
 
-  // DRAW POSTPROCESSING EFFECTS
-  // back to default framebuffer and draw a quad plane
-  
-  //glDepthMask(GL_FALSE);
-  m_postProcessShader.setUniform("horizontal", 0);
-  //glDisable(GL_DEPTH_TEST);
+void RenderingBackend::RenderPostProcessing()
+{
+  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+
   m_postProcessShader.use();
   glBindVertexArray(m_quad.VAO);
-  //m_postProcessShader.setUniform("applyGradient", m_postProcessingGradient);
-  //m_postProcessShader.setUniform("applyBlur", m_postProcessingBlur);
+  // m_postProcessShader.setUniform("applyGradient", m_postProcessingGradient);
+  // m_postProcessShader.setUniform("applyBlur", m_postProcessingBlur);
   m_postProcessShader.setUniform("horizontal", 1);
   m_postProcessShader.setUniform("samples", 15);
   m_postProcessShader.setUniform("sigmaFactor", 0.25f);
+
   // use the color attachment texture as the texture of the quad plane
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, m_textureColorbuffer);
@@ -171,7 +170,16 @@ void RenderingBackend::Render()
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   m_postProcessShader.setUniform("horizontal", 0);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
-  //glDepthMask(GL_TRUE);
+}
+
+void RenderingBackend::Render()
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  RenderBackground();
+  RenderScene();
+  RenderPostProcessing();
 }
 
 void RenderingBackend::Cleanup()

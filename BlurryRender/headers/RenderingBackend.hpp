@@ -24,6 +24,10 @@ public:
   void Initialize();
 private:
 
+  void RenderScene();
+  void RenderBackground();
+  void RenderPostProcessing();
+
 private:
   ShaderProgram m_preProcessShader;
   ShaderProgram m_postProcessShader;
