@@ -3,6 +3,7 @@
 
 using UINT = unsigned int;
 
+constexpr UINT PositionAttrib = 3;
 constexpr UINT PositionTextureAttrib = 5;
 constexpr UINT PositionNormalTextureAttrib = 8;
 
@@ -35,15 +36,17 @@ public:
     setupMesh(vertexAttributes);
   }
 
+  virtual ~Primitive() = default;
+
 private:
-  void setupMesh(UINT vertexAttributes)
+  virtual void setupMesh(UINT vertexAttributes)
   {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
     const bool isNormals = vertexAttributes == PositionNormalTexture;
     const UINT vertexAttributesCount = !isNormals ? PositionTextureAttrib : PositionNormalTextureAttrib;
@@ -53,7 +56,7 @@ private:
     glVertexAttribPointer(
       PositionVertexAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(float) * vertexAttributesCount, (void *)0);
 
-    if (isNormals) 
+    if (isNormals)
     {
       glEnableVertexAttribArray(NormalVertexAttribute);
       glVertexAttribPointer(NormalVertexAttribute,
@@ -70,8 +73,34 @@ private:
       2,
       GL_FLOAT,
       GL_FALSE,
-      sizeof(float) * vertexAttributesCount, 
-      (void *)((isNormals? 6 : 3) * sizeof(float)));
+      sizeof(float) * vertexAttributesCount,
+      (void *)((isNormals ? 6 : 3) * sizeof(float)));
+    glBindVertexArray(0);
+  }
+};
+
+class LightPrimitive : public Primitive
+{
+public:
+  LightPrimitive() : Primitive() {}
+  LightPrimitive(std::vector<float> Vertices) : Primitive(Vertices, PositionNormalTexture) {}
+  LightPrimitive(const float *Vertices, UINT number) : Primitive(Vertices, number, PositionNormalTexture) {}
+
+private:
+  void setupMesh(UINT vertexAttributes) override
+  {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
+
+    // vertex Positions
+    glEnableVertexAttribArray(PositionVertexAttribute);
+    // TODO: We are using 8 vertex attributes here but actually we need only 3 for light, should be fixed later
+    glVertexAttribPointer(
+      PositionVertexAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(float) * PositionNormalTextureAttrib, (void *)0);
     glBindVertexArray(0);
   }
 };

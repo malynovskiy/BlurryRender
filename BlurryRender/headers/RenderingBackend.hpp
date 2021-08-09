@@ -28,6 +28,7 @@ private:
   ShaderProgram m_preProcessShader;
   ShaderProgram m_postProcessShader;
   ShaderProgram m_sceneShader;
+  ShaderProgram m_lightSourceShader;
 
   bool m_postProcessingBlur = true;
   bool m_postProcessingGradient = true;
@@ -39,6 +40,7 @@ private:
   Primitive m_cube;
   Primitive m_plane;
   Primitive m_quad;
+  LightPrimitive m_lightSource;
 
   UINT m_cubeTexture;
   UINT m_planeTexture;
@@ -47,6 +49,7 @@ private:
   std::vector<Model> m_models;
 
   Camera m_camera;
+  glm::vec3 m_lightPosition;
 
   UINT m_width;
   UINT m_height;

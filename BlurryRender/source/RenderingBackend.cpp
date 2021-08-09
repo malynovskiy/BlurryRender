@@ -1,6 +1,7 @@
 #include "RenderingBackend.hpp"
 #include "Primitives.hpp"
 #include "Utility.hpp"
+
 #include <stb_image.h>
 
 // Hard-coded pases for shaders for now
@@ -9,12 +10,12 @@ namespace
 {
 constexpr auto PreProcessVertexShaderPath = "shaders/preprocess.vert";
 constexpr auto PreProcessFragmentShaderPath = "shaders/preprocess.frag";
-
 constexpr auto SceneVertexShaderPath = "shaders/scene.vert";
 constexpr auto SceneFragmentShaderPath = "shaders/scene.frag";
-
 constexpr auto PostProcessVertexShaderPath = "shaders/postprocess.vert";
 constexpr auto PostProcessFragmentShaderPath = "shaders/postprocess.frag";
+constexpr auto LightSourceVertexShaderPath = "shaders/light_source.vert";
+constexpr auto LightSourceFragmentShaderPath = "shaders/light_source.frag";
 }// namespace
 
 RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera(), m_models(0)
@@ -26,10 +27,12 @@ void RenderingBackend::Initialize()
   m_preProcessShader = ShaderProgram(PreProcessVertexShaderPath, PreProcessFragmentShaderPath);
   m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
   m_postProcessShader = ShaderProgram(PostProcessVertexShaderPath, PostProcessFragmentShaderPath);
+  m_lightSourceShader = ShaderProgram(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
 
   m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
   m_plane = Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
   m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PositionTextureAttrib, Primitive::PositionTexture);
+  m_lightSource = LightPrimitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib);
 
   // load textures
   m_cubeTexture = Utility::LoadTextureFromImage("resources/textures/container.jpg");
@@ -74,28 +77,38 @@ void RenderingBackend::Initialize()
   stbi_set_flip_vertically_on_load(true);
   // TODO: cleanup hardcoded paths
   m_models.push_back(Model("resources/models/backpack/backpack.obj"));
+
+  m_lightPosition = glm::vec3(1.2f, 1.0f, 2.0f);
 }
 
 void RenderingBackend::Render()
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
-
-  glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glDepthMask(GL_FALSE);
+  glBindFramebuffer(GL_FRAMEBUFFER, m_framebuffer);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  // PREPROCESSING SHADER
+  //glDepthMask(GL_FALSE);
+  glDisable(GL_DEPTH_TEST);
   m_preProcessShader.use();
   glBindVertexArray(m_quad.VAO);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
   glDepthMask(GL_TRUE);
 
-  glEnable(GL_DEPTH_TEST);// enable depth testing (is disabled for rendering screen-space quad)
+  // DRAW ACTUAL SCENE
+  glEnable(GL_DEPTH_TEST);
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
   glm::mat4 view = m_camera.GetViewMatrix();
   glm::mat4 projection = glm::perspective(glm::radians(m_camera.Zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
   m_sceneShader.setUniform("view", view);
   m_sceneShader.setUniform("projection", projection);
+  m_sceneShader.setUniform("lightColor", 1.0f, 1.0f, 1.0f);
+  m_sceneShader.setUniform("lightPos", m_lightPosition);
+  m_sceneShader.setUniform("viewPos", m_camera.Position);
+
   // cubes
   glBindVertexArray(m_cube.VAO);
   glActiveTexture(GL_TEXTURE0);
@@ -115,17 +128,31 @@ void RenderingBackend::Render()
   m_sceneShader.setUniform("model", model);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
 
-  // render the loaded model
+  // model
   model = glm::mat4(1.0f);
   model = glm::translate(model, glm::vec3(1.4f, -0.2f, 0.3f));
   model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
   m_sceneShader.setUniform("model", model);
   m_models[0].Draw(m_sceneShader);
 
-  glBindVertexArray(0);
+  m_lightSourceShader.use();
+  m_lightSourceShader.setUniform("projection", projection);
+  m_lightSourceShader.setUniform("view", view);
+  model = glm::mat4(1.0f);
+ /* m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
+  m_lightPosition.y = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;*/
+  model = glm::translate(model, m_lightPosition);
+  model = glm::scale(model, glm::vec3(0.2f));
+  m_lightSourceShader.setUniform("model", model);
+  glBindVertexArray(m_lightSource.VAO);
+  glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
 
+  // DRAW POSTPROCESSING EFFECTS
   // back to default framebuffer and draw a quad plane
-  glDisable(GL_DEPTH_TEST);
+  
+  //glDepthMask(GL_FALSE);
+  m_postProcessShader.setUniform("horizontal", 0);
+  //glDisable(GL_DEPTH_TEST);
   m_postProcessShader.use();
   glBindVertexArray(m_quad.VAO);
   //m_postProcessShader.setUniform("applyGradient", m_postProcessingGradient);
@@ -141,11 +168,10 @@ void RenderingBackend::Render()
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  // clear all relevant buffers
-  glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   m_postProcessShader.setUniform("horizontal", 0);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+  //glDepthMask(GL_TRUE);
 }
 
 void RenderingBackend::Cleanup()
@@ -153,9 +179,11 @@ void RenderingBackend::Cleanup()
   glDeleteVertexArrays(1, &m_cube.VAO);
   glDeleteVertexArrays(1, &m_plane.VAO);
   glDeleteVertexArrays(1, &m_quad.VAO);
+  glDeleteVertexArrays(1, &m_lightSource.VAO);
   glDeleteBuffers(1, &m_cube.VBO);
   glDeleteBuffers(1, &m_plane.VBO);
   glDeleteBuffers(1, &m_quad.VBO);
+  glDeleteBuffers(1, &m_lightSource.VBO);
 }
 
 void RenderingBackend::OnKeyDown(UINT key)

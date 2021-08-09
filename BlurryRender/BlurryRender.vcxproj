@@ -103,6 +103,8 @@
     <ClInclude Include="headers\Utility.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\light_source.frag" />
+    <None Include="shaders\light_source.vert" />
     <None Include="shaders\preprocess.frag" />
     <None Include="shaders\preprocess.vert" />
     <None Include="shaders\scene.frag" />
