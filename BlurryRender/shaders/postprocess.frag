@@ -46,8 +46,7 @@ vec3 GaussianBlur(sampler2D sp, vec2 uv, vec2 scale, int hor)
 
 void main()
 {
-  vec2 ps = vec2(1.0) / resolution;
-
+  vec2 ps = 1.0 / textureSize(screenTexture, 0);
   vec3 bluredTexture = GaussianBlur(screenTexture, TexCoords, ps, horizontal);
 
   vec3 screenPixel = texture(screenTexture, TexCoords).rgb;

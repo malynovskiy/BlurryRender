@@ -156,9 +156,9 @@ constexpr float PlaneVertices[PlaneVerticesAmount * PositionNormalTextureAttrib]
     -5.0f, -0.5f,  5.0f,  0.0f, 1.0f,  0.0f,   0.0f, 0.0f,
     -5.0f, -0.5f, -5.0f,  0.0f, 1.0f,  0.0f,   0.0f, 2.0f,
 
-     5.0f, -0.5f,  5.0f,  0.0f, -1.0f,  0.0f,  2.0f, 0.0f,
-    -5.0f, -0.5f, -5.0f,  0.0f, -1.0f,  0.0f,  0.0f, 2.0f,
-     5.0f, -0.5f, -5.0f,  0.0f, -1.0f,  0.0f,  2.0f, 2.0f
+     5.0f, -0.5f,  5.0f,  0.0f, 1.0f,  0.0f,  2.0f, 0.0f,
+    -5.0f, -0.5f, -5.0f,  0.0f, 1.0f,  0.0f,  0.0f, 2.0f,
+     5.0f, -0.5f, -5.0f,  0.0f, 1.0f,  0.0f,  2.0f, 2.0f
   };// clang-format on
 
 constexpr float QuadVertices[PlaneVerticesAmount * PositionTextureAttrib] = {// clang-format off
