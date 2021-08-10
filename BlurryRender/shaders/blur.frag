@@ -6,8 +6,6 @@ in vec2 TexCoords;
 uniform sampler2D screenTexture;
 uniform sampler2D maskTexture;
 
-uniform vec2 resolution;
-
 uniform int horizontal;
 uniform int samples;
 uniform float sigmaFactor;
