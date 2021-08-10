@@ -8,8 +8,8 @@
 
 #include "Utility.hpp"
 #include "ShaderProgram.hpp"
-#include "model.h"
-#include "camera.h"
+#include "Model.h"
+#include "Camera.h"
 #include "RenderingBackend.hpp"
 #include "Primitives.hpp"
 

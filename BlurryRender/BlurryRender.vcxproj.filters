@@ -35,13 +35,13 @@
     <ClInclude Include="headers\ShaderProgram.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\mesh.h">
+    <ClInclude Include="headers\Mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\model.h">
+    <ClInclude Include="headers\Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\camera.h">
+    <ClInclude Include="headers\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers\RenderingBackend.hpp">

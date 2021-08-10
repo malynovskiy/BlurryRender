@@ -1,7 +1,7 @@
 #pragma once
 #include "camera.h"
 #include "ShaderProgram.hpp"
-#include "model.h"
+#include "Model.h"
 #include "Primitives.hpp"
 
 #include <array>

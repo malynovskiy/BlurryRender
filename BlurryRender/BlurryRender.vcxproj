@@ -94,11 +94,11 @@
     <ClCompile Include="source\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="headers\camera.h" />
+    <ClInclude Include="headers\Camera.h" />
     <ClInclude Include="headers\Primitives.hpp" />
     <ClInclude Include="headers\RenderingBackend.hpp" />
-    <ClInclude Include="headers\mesh.h" />
-    <ClInclude Include="headers\model.h" />
+    <ClInclude Include="headers\Mesh.h" />
+    <ClInclude Include="headers\Model.h" />
     <ClInclude Include="headers\ShaderProgram.hpp" />
     <ClInclude Include="headers\Utility.hpp" />
   </ItemGroup>
