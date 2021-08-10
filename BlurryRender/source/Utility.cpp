@@ -76,9 +76,25 @@ unsigned int LoadTextureFromImage(char const *path)
   return texture;
 }
 
-float GetElapsedTime()
+long long milliseconds_now()
 {
-  return static_cast<float>(GetCurrentTime() / 100);
+  static LARGE_INTEGER s_frequency;
+  static BOOL s_use_qpc = QueryPerformanceFrequency(&s_frequency);
+  if (s_use_qpc)
+  {
+    LARGE_INTEGER now;
+    QueryPerformanceCounter(&now);
+    return (1000LL * now.QuadPart) / s_frequency.QuadPart;
+  }
+  else
+  {
+    return GetTickCount();
+  }
+}
+
+double seconds_now()
+{
+  return milliseconds_now() / 1000.0;
 }
 
 }// namespace Utility

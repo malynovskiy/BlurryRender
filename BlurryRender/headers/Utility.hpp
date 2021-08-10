@@ -15,5 +15,8 @@ std::string GetOpenGLContextInformation();
 std::filesystem::path GetRootPath(std::wstring rootFolderName);
 std::string ReadContentFromFile(const std::string &filePath);
 unsigned int LoadTextureFromImage(char const *path);
-float GetElapsedTime();
+
+long long milliseconds_now();
+double seconds_now();
+
 }// namespace Utility
