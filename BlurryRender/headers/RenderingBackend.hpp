@@ -45,6 +45,9 @@ private:
   std::array<UINT, 2> m_blurFBO;
   std::array<UINT, 2> m_blurColorBuffers;
 
+  float m_blurSigma = 0.4f;
+  UINT m_blurPasses = 25;
+
   // Probably should be some vector with primitives for more extensive usage
   Primitive m_cube;
   Primitive m_plane;

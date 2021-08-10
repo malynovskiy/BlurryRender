@@ -70,7 +70,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
   UpdateWindow(hWnd);
 
   renderer.Initialize();
-  renderer.SetCameraPosition(glm::vec3(0.0f, 0.0f, 3.0f));
+  renderer.SetCameraPosition(glm::vec3(0.0f, 0.0f, 8.0f));
 
   MSG msg = { 0 };
 

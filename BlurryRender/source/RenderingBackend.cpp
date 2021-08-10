@@ -20,9 +20,6 @@ constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
 constexpr auto ComposeFragShaderPath = "shaders/compose.frag";
 }// namespace
 
-float sigmaFactor = 0.4f;
-UINT BlurPasses = 25;
-
 RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
 
 void RenderingBackend::Initialize()
@@ -51,10 +48,10 @@ void RenderingBackend::Initialize()
 
   m_sceneShader.use();
   m_sceneShader.setUniform("material.diffuse", 0);
-  m_sceneShader.setUniform("material.specular", 0.6f, 0.6f, 0.5f);
+  m_sceneShader.setUniform("material.specular", 0.2f, 0.2, 0.2f);
   m_sceneShader.setUniform("material.shininess", 8.0f);
   glm::vec3 diffuseColor = glm::vec3(1.0, 1.0, 1.0) * glm::vec3(0.5f);
-  glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
+  glm::vec3 ambientColor = diffuseColor * glm::vec3(0.5f);
   m_sceneShader.setUniform("light.ambient", ambientColor);
   m_sceneShader.setUniform("light.diffuse", diffuseColor);
   m_sceneShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
@@ -116,7 +113,7 @@ void RenderingBackend::Initialize()
   // TODO: cleanup hardcoded paths
   m_model = Model("resources/models/backpack/backpack.obj");
 
-  m_lightPosition = glm::vec3(1.2f, 1.0f, 2.0f);
+  m_lightPosition = glm::vec3(1.2f, 2.0f, 2.0f);
 }
 
 void RenderingBackend::RenderBackground()
@@ -149,24 +146,24 @@ void RenderingBackend::RenderScene()
   glBindVertexArray(m_cube.VAO);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, m_cubeTexture);
-  model = glm::translate(model, glm::vec3(-1.6f, -0.5f, -1.0f));
+  model = glm::translate(model, glm::vec3(-1.6f, -1.0f, -1.0f));
   m_sceneShader.setUniform("model", model);
   glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
   model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, -0.5f, -0.5f));
+  model = glm::translate(model, glm::vec3(0.0f, -1.0f, -0.5f));
   m_sceneShader.setUniform("model", model);
   glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
   // floor
   glBindVertexArray(m_plane.VAO);
   glBindTexture(GL_TEXTURE_2D, m_planeTexture);
   model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(0.0f, -0.9f, 0.0f));
+  model = glm::translate(model, glm::vec3(0.0f, -1.0f, 0.0f));
   m_sceneShader.setUniform("model", model);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
 
   // model
   model = glm::mat4(1.0f);
-  model = glm::translate(model, glm::vec3(1.4f, -0.2f, 0.3f));
+  model = glm::translate(model, glm::vec3(1.4f, -1.0f, 0.3f));
   model = glm::scale(model, glm::vec3(0.4f, 0.4f, 0.4f));
   m_sceneShader.setUniform("model", model);
   m_model.Draw(m_sceneShader);
@@ -176,8 +173,7 @@ void RenderingBackend::RenderScene()
   m_lightSourceShader.setUniform("projection", projection);
   m_lightSourceShader.setUniform("view", view);
   model = glm::mat4(1.0f);
-  //m_lightPosition.x = 1.0f + sin(Utility::GetElapsedTime()) * 2.0f;
-  //m_lightPosition.z = sin(Utility::GetElapsedTime() / 2.0f) * 1.0f;
+  m_lightPosition.z = 1.5 + sin(Utility::seconds_now() / 1.0) * 4.0f;
   model = glm::translate(model, m_lightPosition);
   model = glm::scale(model, glm::vec3(0.2f));
   m_lightSourceShader.setUniform("model", model);
@@ -190,9 +186,9 @@ void RenderingBackend::RenderPostProcessing()
   bool first_iteration = true;
   m_blurShader.use();
   m_blurShader.setUniform("samples", 8);
-  m_blurShader.setUniform("sigmaFactor", sigmaFactor);
+  m_blurShader.setUniform("sigmaFactor", m_blurSigma);
   glBindVertexArray(m_quad.VAO);
-  for (size_t i = 0; i < BlurPasses; i++)
+  for (size_t i = 0; i < m_blurPasses; i++)
   {
     glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[m_horizontal]);
     m_blurShader.setUniform("horizontal", m_horizontal);
@@ -243,28 +239,6 @@ void RenderingBackend::Cleanup()
   glDeleteBuffers(1, &m_lightSource.VBO);
 }
 
-namespace
-{
-void ProcessKeyboard(glm::vec3 &position, Camera_Movement direction, float deltaTime)
-{
-  constexpr float SPEED = 2.5f;
-  constexpr glm::vec3 Forward(0.0f, 0.0f, -1.0f);
-  constexpr glm::vec3 Up(0.0f, 1.0f, 0.0f);
-  const glm::vec3 Right(1.0f, 1.0f, 0.0f);
-
-  const float velocity = SPEED * deltaTime;
-
-  if (direction == FORWARD)
-    position += Forward * velocity;
-  if (direction == BACKWARD)
-    position -= Forward * velocity;
-  if (direction == LEFT)
-    position -= Right * velocity;
-  if (direction == RIGHT)
-    position += Right * velocity;
-}
-}// namespace
-
 void RenderingBackend::OnKeyDown(UINT key)
 {
   switch (key)
@@ -286,49 +260,24 @@ void RenderingBackend::OnKeyDown(UINT key)
   }
   break;
 
-  case 'I': {
-    ProcessKeyboard(m_lightPosition, FORWARD, 0.2);
-  }
-  break;
-  case 'J': {
-    ProcessKeyboard(m_lightPosition, LEFT, 0.2);
-  }
-  break;
-  case 'K': {
-    ProcessKeyboard(m_lightPosition, BACKWARD, 0.2);
-  }
-  break;
-  case 'L': {
-    ProcessKeyboard(m_lightPosition, RIGHT, 0.2);
-  }
-  break;
-
   case '1': {
-    BlurPasses -= 1;
+    m_blurPasses -= 1;
   }
   break;
 
   case '2': {
-    BlurPasses += 1;
+    m_blurPasses += 1;
   }
   break;
 
   case '3': {
-    sigmaFactor -= 0.1;
+    m_blurSigma -= 0.1;
   }
   break;
 
   case '4': {
-    sigmaFactor += 0.1;
+    m_blurSigma += 0.1;
   }
   break;
-    /*case 'G': {
-      m_horizontal = !m_horizontal;
-    }
-    break;
-    case 'B': {
-      m_postProcessingBlur = !m_postProcessingBlur;
-    }
-    break;*/
   }
 }
