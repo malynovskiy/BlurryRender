@@ -135,7 +135,13 @@ void RenderingBackend::RenderScene()
 
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
-  glm::mat4 view = m_camera.GetViewMatrix();
+
+  const float rotationRadius = 7.0f;
+  const float rotationSpeed = 0.6;
+  float camX = sin(Utility::seconds_now() * rotationSpeed) * rotationRadius;
+  float camZ = cos(Utility::seconds_now() * rotationSpeed) * rotationRadius;
+  glm::mat4 view = m_camera.LookAt(glm::vec3(camX, 0.0, camZ));
+
   glm::mat4 projection = glm::perspective(glm::radians(m_camera.Zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
   m_sceneShader.setUniform("view", view);
   m_sceneShader.setUniform("projection", projection);
