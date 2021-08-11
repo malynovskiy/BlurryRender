@@ -55,8 +55,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
   if (!hPrevInstance && IsAppAlreadyRunning())
     return 0;
 
-  const std::filesystem::path rootPath = Utility::GetRootPath(AppName);
-
   CreateWin32Context(hInstance);
   RenderingBackend renderer(WindowWidth, WindowHeight);
   HWND hWnd{};
