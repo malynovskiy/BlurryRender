@@ -3,11 +3,11 @@
 #include <Windows.h>
 #include <glad/glad.h>
 
-#include <fstream>
-#include <iostream>
-
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+#include <fstream>
+#include <iostream>
 
 namespace Utility
 {
