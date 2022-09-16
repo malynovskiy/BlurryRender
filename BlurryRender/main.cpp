@@ -1,5 +1,5 @@
-#include <windows.h>
 #include <glad/glad.h>
+#include <windows.h>
 
 #include <string>
 #include <iostream>
@@ -64,6 +64,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
   HDC hDC = GetDC(hWnd);
   // Not sure whether we need global var for this one
+  Utility::Scope_guard const unbindOpenGLContextGuard = [&hWnd, &hDC] { UnbindOpenGLContext(hWnd, hDC, hglrc); };
   W_CHECK(hglrc = LoadAndBindOpenGLContext(hDC));
 
   ShowWindow(hWnd, SW_SHOW);
@@ -90,7 +91,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     SwapBuffers(hDC);
   }
 
-  UnbindOpenGLContext(hWnd, hDC, hglrc);
+  // UnbindOpenGLContext(hWnd, hDC, hglrc);
 
   return static_cast<int>(msg.wParam);
 }

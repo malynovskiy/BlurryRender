@@ -109,6 +109,7 @@
     <ClInclude Include="headers\Utility.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\WallKan\.clang-format" />
     <None Include="shaders\compose.frag" />
     <None Include="shaders\compose.vert" />
     <None Include="shaders\light_source.frag" />

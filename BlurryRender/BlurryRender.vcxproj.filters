@@ -62,5 +62,6 @@
     <None Include="shaders\light_source.frag" />
     <None Include="shaders\compose.vert" />
     <None Include="shaders\compose.frag" />
+    <None Include="..\..\WallKan\.clang-format" />
   </ItemGroup>
 </Project>

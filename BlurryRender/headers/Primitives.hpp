@@ -23,8 +23,6 @@ public:
     PositionNormalTexture
   };
 
-  UINT VAO, VBO;
-  std::vector<float> vertices;
   Primitive() : vertices(0), VAO(0), VBO(0) {}
   Primitive(std::vector<float> Vertices, UINT vertexAttributes = PositionTexture) : vertices(Vertices), VAO(0), VBO(0)
   {
@@ -77,6 +75,10 @@ private:
       (void *)((isNormals ? 6 : 3) * sizeof(float)));
     glBindVertexArray(0);
   }
+
+public:
+  UINT VAO, VBO;
+  std::vector<float> vertices;
 };
 
 class LightPrimitive : public Primitive
@@ -105,7 +107,7 @@ private:
   }
 };
 
-const float CubeVertices[CubeVerticesAmount * PositionNormalTextureAttrib] = {// clang-format off
+constexpr float CubeVertices[CubeVerticesAmount * PositionNormalTextureAttrib] = {// clang-format off
     // positions           // normal             // texture Coords
     -0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f,
      0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 0.0f,
