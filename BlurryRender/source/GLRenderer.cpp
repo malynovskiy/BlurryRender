@@ -8,12 +8,12 @@
 // TODO: Need to be fixed later
 namespace
 {
-constexpr auto BlurVertexShaderPath = "shaders/chessboard.vert";
-constexpr auto BlurFragmentShaderPath = "shaders/chessboard.frag";
+constexpr auto BackgroundVertexShaderPath = "shaders/chessboard.vert";
+constexpr auto BackgroundFragmentShaderPath = "shaders/chessboard.frag";
 constexpr auto SceneVertexShaderPath = "shaders/scene.vert";
 constexpr auto SceneFragmentShaderPath = "shaders/scene.frag";
-constexpr auto BackgroundVertexShaderPath = "shaders/blur.vert";
-constexpr auto BackgroundFragmentShaderPath = "shaders/blur.frag";
+constexpr auto BlurVertexShaderPath = "shaders/blur.vert";
+constexpr auto BlurFragmentShaderPath = "shaders/blur.frag";
 constexpr auto LightSourceVertexShaderPath = "shaders/light_source.vert";
 constexpr auto LightSourceFragmentShaderPath = "shaders/light_source.frag";
 constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
@@ -24,9 +24,9 @@ GLRenderer::GLRenderer(UINT width, UINT height) : m_width(width), m_height(heigh
 
 void GLRenderer::Initialize()
 {
-  m_backgroundShader = ShaderProgram(BlurVertexShaderPath, BlurFragmentShaderPath);
+  m_backgroundShader = ShaderProgram(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
   m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
-  m_blurShader = ShaderProgram(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
+  m_blurShader = ShaderProgram(BlurVertexShaderPath, BlurFragmentShaderPath);
   m_lightSourceShader = ShaderProgram(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
   m_composeShader = ShaderProgram(ComposeVertShaderPath, ComposeFragShaderPath);
 
