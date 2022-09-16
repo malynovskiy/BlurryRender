@@ -2,12 +2,12 @@
 #include <glm/glm.hpp>
 #include <string>
 
-class ShaderProgram
+class Shader
 {
 public:
-  ShaderProgram() = default;
-  ShaderProgram(std::string vertexPath, std::string fragmentPath);
-  ~ShaderProgram() = default;
+  Shader() = default;
+  Shader(std::string vertexPath, std::string fragmentPath);
+  ~Shader() = default;
 
   void use();
   unsigned int getDescriptor() { return m_descriptor; }

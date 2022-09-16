@@ -8,6 +8,7 @@
 // TODO: Need to be fixed later
 namespace
 {
+// SHADERS
 constexpr auto BackgroundVertexShaderPath = "shaders/chessboard.vert";
 constexpr auto BackgroundFragmentShaderPath = "shaders/chessboard.frag";
 constexpr auto SceneVertexShaderPath = "shaders/scene.vert";
@@ -18,30 +19,57 @@ constexpr auto LightSourceVertexShaderPath = "shaders/light_source.vert";
 constexpr auto LightSourceFragmentShaderPath = "shaders/light_source.frag";
 constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
 constexpr auto ComposeFragShaderPath = "shaders/compose.frag";
+
+// MODELS
+constexpr auto BackpackModelPath = "resources/models/backpack/backpack.obj";
+
+// TEXTURES
+constexpr auto ContainerTexturePath = "resources/textures/container.jpg";
+constexpr auto BackgroundTexturePath = "resources/textures/back.jpg";
+constexpr auto GradientMaskTexturePath = "resources/textures/gradient_mask.png";
 }// namespace
 
-GLRenderer::GLRenderer(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
+GLRenderer::GLRenderer(u32 width, u32 height) : m_width(width), m_height(height), m_camera() {}
 
 void GLRenderer::Initialize()
 {
-  m_backgroundShader = ShaderProgram(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
-  m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
-  m_blurShader = ShaderProgram(BlurVertexShaderPath, BlurFragmentShaderPath);
-  m_lightSourceShader = ShaderProgram(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
-  m_composeShader = ShaderProgram(ComposeVertShaderPath, ComposeFragShaderPath);
+  CreateShaders();
+  ConfigureShaders();
 
-  m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
-  m_plane =
-    Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
-  m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PositionTextureAttrib, Primitive::PositionTexture);
-  m_lightSource = LightPrimitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib);
+  CreateModels();
+  LoadTextures();
 
-  // load textures
-  m_cubeTexture = Utility::LoadTextureFromImage("resources/textures/container.jpg");
-  m_planeTexture = Utility::LoadTextureFromImage("resources/textures/back.jpg");
-  m_maskTexture = Utility::LoadTextureFromImage("resources/textures/gradient_mask.png");
+  ConfigureFramebuffer();
 
-  // shader configuration
+  stbi_set_flip_vertically_on_load(true);
+
+  m_lightPosition = glm::vec3(1.2f, 2.0f, 2.0f);
+}
+
+void GLRenderer::RenderBackground()
+{
+  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glDisable(GL_DEPTH_TEST);
+  m_backgroundShader.use();
+  glBindVertexArray(m_quad.VAO);
+  glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+}
+
+void GLRenderer::CreateShaders()
+{
+  m_backgroundShader = Shader(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
+  m_sceneShader = Shader(SceneVertexShaderPath, SceneFragmentShaderPath);
+  m_blurShader = Shader(BlurVertexShaderPath, BlurFragmentShaderPath);
+  m_lightSourceShader = Shader(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
+  m_composeShader = Shader(ComposeVertShaderPath, ComposeFragShaderPath);
+}
+
+void GLRenderer::ConfigureShaders()
+{
   m_backgroundShader.use();
   glm::vec2 resolution = glm::vec2(static_cast<float>(m_width), static_cast<float>(m_height));
   m_backgroundShader.setUniform("resolution", resolution);
@@ -62,10 +90,14 @@ void GLRenderer::Initialize()
   m_blurShader.setUniform("maskTexture", 1);
 
   m_composeShader.setUniform("screenTexture", 0);
+}
 
+void GLRenderer::ConfigureFramebuffer()
+{
   // Background framebuffer configuration
   glGenFramebuffers(1, &m_sceneFBO);
   glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+
   glGenTextures(1, &m_sceneColorBuffer);
   glBindTexture(GL_TEXTURE_2D, m_sceneColorBuffer);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
@@ -76,21 +108,21 @@ void GLRenderer::Initialize()
   // attach texture to framebuffer
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_sceneColorBuffer, 0);
 
-  UINT sceneDepthRBO{};
+  u32 sceneDepthRBO{};
   glGenRenderbuffers(1, &sceneDepthRBO);
   glBindRenderbuffer(GL_RENDERBUFFER, sceneDepthRBO);
   glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, m_width, m_height);
   glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, sceneDepthRBO);
   W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
   if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-    std::cerr << "Error, Framebuffer is not complete!\n";
+    std::cerr << "Error, framebuffer is not complete!\n";
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
   // Blur framebuffers configuration
-  glGenFramebuffers(2, m_blurFBO.data());
-  glGenTextures(2, m_blurColorBuffers.data());
-  for (size_t i = 0; i < 2; ++i)
+  glGenFramebuffers(BlurFramebuffersCount, m_blurFBO.data());
+  glGenTextures(BlurFramebuffersCount, m_blurColorBuffers.data());
+  for (size_t i = 0; i < BlurFramebuffersCount; ++i)
   {
     glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[i]);
     // create a color attachment texture
@@ -104,29 +136,34 @@ void GLRenderer::Initialize()
 
     W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-      std::cerr << "Error, Framebuffer is not complete!\n";
+      std::cerr << "Error, framebuffer is not complete!\n";
   }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  stbi_set_flip_vertically_on_load(true);
-  // TODO: cleanup hardcoded paths
-  m_model = Model("resources/models/backpack/backpack.obj");
-
-  m_lightPosition = glm::vec3(1.2f, 2.0f, 2.0f);
 }
 
-void GLRenderer::RenderBackground()
+inline void GLRenderer::ClearFrame() const
 {
-  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
-  glDisable(GL_DEPTH_TEST);
-  m_backgroundShader.use();
-  glBindVertexArray(m_quad.VAO);
-  glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);
+void GLRenderer::CreateModels()
+{
+  m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
+  m_plane =
+    Primitive(PlaneVertices, PlaneVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
+  m_quad = Primitive(QuadVertices, PlaneVerticesAmount * PositionTextureAttrib, Primitive::PositionTexture);
+  m_lightSource = LightPrimitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib);
+
+  m_model = Model(BackpackModelPath);
+}
+
+void GLRenderer::LoadTextures()
+{
+  m_cubeTexture = Utility::LoadTextureFromImage(ContainerTexturePath);
+  m_planeTexture = Utility::LoadTextureFromImage(BackgroundTexturePath);
+  m_maskTexture = Utility::LoadTextureFromImage(GradientMaskTexturePath);
 }
 
 void GLRenderer::RenderScene()
@@ -216,8 +253,7 @@ void GLRenderer::RenderPostProcessing()
 
 void GLRenderer::Render()
 {
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  ClearFrame();
 
   RenderBackground();
   RenderScene();
@@ -245,7 +281,7 @@ GLRenderer::~GLRenderer()
   glDeleteBuffers(1, &m_lightSource.VBO);
 }
 
-void GLRenderer::OnKeyDown(UINT key)
+void GLRenderer::OnKeyDown(u32 key)
 {
   switch (key)
   {

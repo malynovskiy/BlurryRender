@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "ShaderProgram.hpp"
+#include "Shader.hpp"
 
 #include <string>
 #include <vector>
@@ -46,7 +46,7 @@ public:
     setupMesh();
   }
 
-  void Draw(ShaderProgram &shader)
+  void Draw(Shader &shader)
   {
     // bind appropriate textures
     unsigned int diffuseNr = 1;

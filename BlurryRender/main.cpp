@@ -1,17 +1,17 @@
 #include <glad/glad.h>
 #include <windows.h>
 
-#include <string>
-#include <iostream>
-#include <cassert>
-#include <filesystem>
-
 #include "Utility.hpp"
-#include "ShaderProgram.hpp"
+#include "Shader.hpp"
 #include "Model.h"
 #include "Camera.h"
 #include "GLRenderer.hpp"
 #include "Primitives.hpp"
+
+#include <string>
+#include <iostream>
+#include <cassert>
+#include <filesystem>
 
 using U32 = unsigned int;
 
