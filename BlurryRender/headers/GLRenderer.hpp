@@ -6,15 +6,16 @@
 
 #include <array>
 
-class RenderingBackend
+class GLRenderer
 {
   using UINT = unsigned int;
 
 public:
-  RenderingBackend(UINT width, UINT height);
+  GLRenderer(UINT width, UINT height);
+  ~GLRenderer();
 
-  UINT GetWidth() const { return m_width; }
-  UINT GetHeight() const { return m_height; }
+  inline UINT GetWidth() const { return m_width; }
+  inline UINT GetHeight() const { return m_height; }
 
   void SetCameraPosition(glm::vec3 position) { m_camera.Position = position; }
 

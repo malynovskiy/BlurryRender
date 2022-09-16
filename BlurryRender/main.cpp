@@ -10,7 +10,7 @@
 #include "ShaderProgram.hpp"
 #include "Model.h"
 #include "Camera.h"
-#include "RenderingBackend.hpp"
+#include "GLRenderer.hpp"
 #include "Primitives.hpp"
 
 using U32 = unsigned int;
@@ -31,7 +31,7 @@ namespace
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 void CreateWin32Context(HINSTANCE hInstance);
-HWND CreateWin32Window(HINSTANCE hInstance, RenderingBackend *renderer);
+HWND CreateWin32Window(HINSTANCE hInstance, GLRenderer *renderer);
 
 HGLRC LoadAndBindOpenGLContext(HDC hDC);
 void UnbindOpenGLContext(HWND hWnd, HDC hDC, HGLRC hglrc);
@@ -56,9 +56,11 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     return 0;
 
   CreateWin32Context(hInstance);
-  RenderingBackend renderer(WindowWidth, WindowHeight);
+
+  std::unique_ptr<GLRenderer> glRenderer = std::make_unique<GLRenderer>(WindowWidth, WindowHeight);
+
   HWND hWnd{};
-  W_CHECK(hWnd = CreateWin32Window(hInstance, &renderer));
+  W_CHECK(hWnd = CreateWin32Window(hInstance, glRenderer.get()));
 
   HDC hDC = GetDC(hWnd);
   // Not sure whether we need global var for this one
@@ -67,8 +69,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
   ShowWindow(hWnd, SW_SHOW);
   UpdateWindow(hWnd);
 
-  renderer.Initialize();
-  renderer.SetCameraPosition(glm::vec3(0.0f, 0.0f, 8.0f));
+  glRenderer->Initialize();
+
+  constexpr glm::vec3 initialCameraPos{ 0.0f, 0.0f, 8.0f };
+  glRenderer->SetCameraPosition(initialCameraPos);
 
   MSG msg = { 0 };
 
@@ -82,11 +86,10 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
       DispatchMessage(&msg);
     }
 
-    renderer.Render();
+    glRenderer->Render();
     SwapBuffers(hDC);
   }
 
-  renderer.Cleanup();
   UnbindOpenGLContext(hWnd, hDC, hglrc);
 
   return static_cast<int>(msg.wParam);
@@ -96,7 +99,7 @@ namespace
 {
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-  RenderingBackend *renderer = reinterpret_cast<RenderingBackend *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+  GLRenderer *renderer = reinterpret_cast<GLRenderer *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
   switch (message)
   {
@@ -153,7 +156,7 @@ void CreateWin32Context(HINSTANCE hInstance)
   W_CHECK(RegisterClassEx(&wndClass));
 }
 
-HWND CreateWin32Window(HINSTANCE hInstance, RenderingBackend *renderer)
+HWND CreateWin32Window(HINSTANCE hInstance, GLRenderer *renderer)
 {
   SetRect(&windowRect,
     (GetSystemMetrics(SM_CXSCREEN) / 2) - (WindowWidth / 2),

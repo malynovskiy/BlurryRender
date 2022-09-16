@@ -24,7 +24,7 @@
     <ClCompile Include="source\Utility.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="source\RenderingBackend.cpp">
+    <ClCompile Include="source\GLRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,7 +44,7 @@
     <ClInclude Include="headers\Camera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="headers\RenderingBackend.hpp">
+    <ClInclude Include="headers\GLRenderer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="headers\Primitives.hpp">

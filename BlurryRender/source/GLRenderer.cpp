@@ -1,4 +1,4 @@
-#include "RenderingBackend.hpp"
+#include "GLRenderer.hpp"
 #include "Primitives.hpp"
 #include "Utility.hpp"
 
@@ -20,9 +20,9 @@ constexpr auto ComposeVertShaderPath = "shaders/compose.vert";
 constexpr auto ComposeFragShaderPath = "shaders/compose.frag";
 }// namespace
 
-RenderingBackend::RenderingBackend(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
+GLRenderer::GLRenderer(UINT width, UINT height) : m_width(width), m_height(height), m_camera() {}
 
-void RenderingBackend::Initialize()
+void GLRenderer::Initialize()
 {
   m_backgroundShader = ShaderProgram(BlurVertexShaderPath, BlurFragmentShaderPath);
   m_sceneShader = ShaderProgram(SceneVertexShaderPath, SceneFragmentShaderPath);
@@ -116,7 +116,7 @@ void RenderingBackend::Initialize()
   m_lightPosition = glm::vec3(1.2f, 2.0f, 2.0f);
 }
 
-void RenderingBackend::RenderBackground()
+void GLRenderer::RenderBackground()
 {
   glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -129,7 +129,7 @@ void RenderingBackend::RenderBackground()
   glDepthMask(GL_TRUE);
 }
 
-void RenderingBackend::RenderScene()
+void GLRenderer::RenderScene()
 {
   glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
 
@@ -187,7 +187,7 @@ void RenderingBackend::RenderScene()
   glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
 }
 
-void RenderingBackend::RenderPostProcessing()
+void GLRenderer::RenderPostProcessing()
 {
   bool first_iteration = true;
   m_blurShader.use();
@@ -214,7 +214,7 @@ void RenderingBackend::RenderPostProcessing()
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void RenderingBackend::Render()
+void GLRenderer::Render()
 {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -233,7 +233,7 @@ void RenderingBackend::Render()
   glBindVertexArray(0);
 }
 
-void RenderingBackend::Cleanup()
+GLRenderer::~GLRenderer()
 {
   glDeleteVertexArrays(1, &m_cube.VAO);
   glDeleteVertexArrays(1, &m_plane.VAO);
@@ -245,7 +245,7 @@ void RenderingBackend::Cleanup()
   glDeleteBuffers(1, &m_lightSource.VBO);
 }
 
-void RenderingBackend::OnKeyDown(UINT key)
+void GLRenderer::OnKeyDown(UINT key)
 {
   switch (key)
   {
