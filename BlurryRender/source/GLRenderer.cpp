@@ -46,19 +46,6 @@ void GLRenderer::Initialize()
   m_lightPosition = glm::vec3(1.2f, 2.0f, 2.0f);
 }
 
-void GLRenderer::RenderBackground()
-{
-  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glDisable(GL_DEPTH_TEST);
-  m_backgroundShader.use();
-  glBindVertexArray(m_quad.VAO);
-  glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);
-}
-
 void GLRenderer::CreateShaders()
 {
   m_backgroundShader = Shader(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
@@ -142,12 +129,6 @@ void GLRenderer::ConfigureFramebuffer()
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-inline void GLRenderer::ClearFrame() const
-{
-  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
 void GLRenderer::CreateModels()
 {
   m_cube = Primitive(CubeVertices, CubeVerticesAmount * PositionNormalTextureAttrib, Primitive::PositionNormalTexture);
@@ -166,6 +147,25 @@ void GLRenderer::LoadTextures()
   m_maskTexture = Utility::LoadTextureFromImage(GradientMaskTexturePath);
 }
 
+inline void GLRenderer::ClearFrame() const
+{
+  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void GLRenderer::RenderBackground()
+{
+  glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glDisable(GL_DEPTH_TEST);
+  m_backgroundShader.use();
+  glBindVertexArray(m_quad.VAO);
+  glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
+}
+
 void GLRenderer::RenderScene()
 {
   glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
@@ -173,10 +173,10 @@ void GLRenderer::RenderScene()
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
 
-  const float rotationRadius = 7.0f;
-  const float rotationSpeed = 0.6;
-  float camX = sin(Utility::seconds_now() * rotationSpeed) * rotationRadius;
-  float camZ = cos(Utility::seconds_now() * rotationSpeed) * rotationRadius;
+  constexpr float rotationRadius = 7.0f;
+  constexpr float rotationSpeed = 0.4;
+  const float camX = sin(Utility::seconds_now() * rotationSpeed) * rotationRadius;
+  const float camZ = cos(Utility::seconds_now() * rotationSpeed) * rotationRadius;
   glm::mat4 view = m_camera.LookAt(glm::vec3(camX, 0.0, camZ));
 
   glm::mat4 projection = glm::perspective(glm::radians(m_camera.Zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
@@ -213,13 +213,16 @@ void GLRenderer::RenderScene()
 
   // Light source
   m_lightSourceShader.use();
-  m_lightSourceShader.setUniform("projection", projection);
-  m_lightSourceShader.setUniform("view", view);
+
   model = glm::mat4(1.0f);
   m_lightPosition.z = 1.5 + sin(Utility::seconds_now() / 1.0) * 4.0f;
   model = glm::translate(model, m_lightPosition);
   model = glm::scale(model, glm::vec3(0.2f));
+
   m_lightSourceShader.setUniform("model", model);
+  m_lightSourceShader.setUniform("projection", projection);
+  m_lightSourceShader.setUniform("view", view);
+
   glBindVertexArray(m_lightSource.VAO);
   glDrawArrays(GL_TRIANGLES, 0, CubeVerticesAmount);
 }
