@@ -39,6 +39,8 @@ private:
   void RenderScene();
   void RenderBackground();
   void RenderPostProcessing();
+  
+  void RenderBlurEffect();
 
 private:
   Shader m_backgroundShader;

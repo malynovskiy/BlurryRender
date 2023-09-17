@@ -50,7 +50,7 @@ void GLRenderer::CreateShaders()
 {
   m_backgroundShader = Shader(BackgroundVertexShaderPath, BackgroundFragmentShaderPath);
   m_sceneShader = Shader(SceneVertexShaderPath, SceneFragmentShaderPath);
-  m_blurShader = Shader(BlurVertexShaderPath, BlurFragmentShaderPath);
+  //m_blurShader = Shader(BlurVertexShaderPath, BlurFragmentShaderPath);
   m_lightSourceShader = Shader(LightSourceVertexShaderPath, LightSourceFragmentShaderPath);
   m_composeShader = Shader(ComposeVertShaderPath, ComposeFragShaderPath);
 }
@@ -63,7 +63,7 @@ void GLRenderer::ConfigureShaders()
 
   m_sceneShader.use();
   m_sceneShader.setUniform("material.diffuse", 0);
-  m_sceneShader.setUniform("material.specular", 0.2f, 0.2, 0.2f);
+  m_sceneShader.setUniform("material.specular", 0.2f, 0.2f, 0.2f);
   m_sceneShader.setUniform("material.shininess", 8.0f);
   glm::vec3 diffuseColor = glm::vec3(1.0, 1.0, 1.0) * glm::vec3(0.5f);
   glm::vec3 ambientColor = diffuseColor * glm::vec3(0.5f);
@@ -71,10 +71,10 @@ void GLRenderer::ConfigureShaders()
   m_sceneShader.setUniform("light.diffuse", diffuseColor);
   m_sceneShader.setUniform("light.specular", 1.0f, 1.0f, 1.0f);
 
-  m_blurShader.use();
-  m_blurShader.setUniform("resolution", resolution);
-  m_blurShader.setUniform("screenTexture", 0);
-  m_blurShader.setUniform("maskTexture", 1);
+  //m_blurShader.use();
+  //m_blurShader.setUniform("resolution", resolution);
+  //m_blurShader.setUniform("screenTexture", 0);
+  //m_blurShader.setUniform("maskTexture", 1);
 
   m_composeShader.setUniform("screenTexture", 0);
 }
@@ -106,27 +106,28 @@ void GLRenderer::ConfigureFramebuffer()
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+  // Disabled blur for now
   // Blur framebuffers configuration
-  glGenFramebuffers(BlurFramebuffersCount, m_blurFBO.data());
-  glGenTextures(BlurFramebuffersCount, m_blurColorBuffers.data());
-  for (size_t i = 0; i < BlurFramebuffersCount; ++i)
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[i]);
-    // create a color attachment texture
-    glBindTexture(GL_TEXTURE_2D, m_blurColorBuffers[i]);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_blurColorBuffers[i], 0);
-
-    W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-      std::cerr << "Error, framebuffer is not complete!\n";
-  }
-
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //glGenFramebuffers(BlurFramebuffersCount, m_blurFBO.data());
+  //glGenTextures(BlurFramebuffersCount, m_blurColorBuffers.data());
+  //for (size_t i = 0; i < BlurFramebuffersCount; ++i)
+  //{
+  //  glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[i]);
+  //  // create a color attachment texture
+  //  glBindTexture(GL_TEXTURE_2D, m_blurColorBuffers[i]);
+  //  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_width, m_height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+  //  glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_blurColorBuffers[i], 0);
+//
+  //  W_CHECK(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+  //  if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+  //    std::cerr << "Error, framebuffer is not complete!\n";
+  //}
+//
+  //glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GLRenderer::CreateModels()
@@ -169,6 +170,12 @@ void GLRenderer::RenderBackground()
 void GLRenderer::RenderScene()
 {
   glBindFramebuffer(GL_FRAMEBUFFER, m_sceneFBO);
+
+  /*glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);*/
 
   m_sceneShader.use();
   glm::mat4 model = glm::mat4(1.0f);
@@ -215,7 +222,7 @@ void GLRenderer::RenderScene()
   m_lightSourceShader.use();
 
   model = glm::mat4(1.0f);
-  m_lightPosition.z = 1.5 + sin(Utility::seconds_now() / 1.0) * 4.0f;
+  m_lightPosition.z = static_cast<float>(1.5 + sin(Utility::seconds_now() / 1.0) * 4.0);
   model = glm::translate(model, m_lightPosition);
   model = glm::scale(model, glm::vec3(0.2f));
 
@@ -229,29 +236,35 @@ void GLRenderer::RenderScene()
 
 void GLRenderer::RenderPostProcessing()
 {
-  bool first_iteration = true;
-  m_blurShader.use();
-  m_blurShader.setUniform("samples", 8);
-  m_blurShader.setUniform("sigmaFactor", m_blurSigma);
-  glBindVertexArray(m_quad.VAO);
-  for (size_t i = 0; i < m_blurPasses; i++)
-  {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[m_horizontal]);
-    m_blurShader.setUniform("horizontal", m_horizontal);
+	// Disabled blur for now
+	//RenderBlurEffect();
+}
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, first_iteration ? m_sceneColorBuffer : m_blurColorBuffers[!m_horizontal]);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, m_maskTexture);
+void GLRenderer::RenderBlurEffect()
+{
+	bool first_iteration = true;
+	m_blurShader.use();
+	m_blurShader.setUniform("samples", 8);
+	m_blurShader.setUniform("sigmaFactor", m_blurSigma);
+	glBindVertexArray(m_quad.VAO);
+	for (size_t i = 0; i < m_blurPasses; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, m_blurFBO[m_horizontal]);
+		m_blurShader.setUniform("horizontal", m_horizontal);
 
-    glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? m_sceneColorBuffer : m_blurColorBuffers[!m_horizontal]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_maskTexture);
 
-    m_horizontal = !m_horizontal;
-    if (first_iteration)
-      first_iteration = false;
-  }
-  glBindVertexArray(0);
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
+
+		m_horizontal = !m_horizontal;
+		if (first_iteration)
+			first_iteration = false;
+	}
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GLRenderer::Render()
@@ -263,13 +276,13 @@ void GLRenderer::Render()
   RenderPostProcessing();
 
   // Composing everything into default framebuffer for presentation
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  /*glBindFramebuffer(GL_FRAMEBUFFER, 0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   m_composeShader.use();
   glBindTexture(GL_TEXTURE_2D, m_blurColorBuffers[!m_horizontal]);
   glBindVertexArray(m_quad.VAO);
   glDrawArrays(GL_TRIANGLES, 0, PlaneVerticesAmount);
-  glBindVertexArray(0);
+  glBindVertexArray(0);*/
 }
 
 GLRenderer::~GLRenderer()
@@ -289,19 +302,19 @@ void GLRenderer::OnKeyDown(u32 key)
   switch (key)
   {
   case 'W': {
-    m_camera.ProcessKeyboard(FORWARD, 0.1);
+    m_camera.ProcessKeyboard(FORWARD, 0.1f);
   }
   break;
   case 'A': {
-    m_camera.ProcessKeyboard(LEFT, 0.1);
+    m_camera.ProcessKeyboard(LEFT, 0.1f);
   }
   break;
   case 'S': {
-    m_camera.ProcessKeyboard(BACKWARD, 0.1);
+    m_camera.ProcessKeyboard(BACKWARD, 0.1f);
   }
   break;
   case 'D': {
-    m_camera.ProcessKeyboard(RIGHT, 0.1);
+    m_camera.ProcessKeyboard(RIGHT, 0.1f);
   }
   break;
 
@@ -316,12 +329,12 @@ void GLRenderer::OnKeyDown(u32 key)
   break;
 
   case '3': {
-    m_blurSigma -= 0.1;
+    m_blurSigma -= 0.1f;
   }
   break;
 
   case '4': {
-    m_blurSigma += 0.1;
+    m_blurSigma += 0.1f;
   }
   break;
   }

@@ -32,7 +32,7 @@ public:
   {
   }
 
-  Scope_guard(Scope_guard &&other) : cleanup_(move(other.cleanup_)) { dismiss(other); }
+  Scope_guard(Scope_guard &&other) noexcept : cleanup_(move(other.cleanup_)) { dismiss(other); }
   ~Scope_guard() { cleanup_(); }
 
   friend void dismiss(Scope_guard &g)
