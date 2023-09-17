@@ -14,8 +14,10 @@ public:
   GLRenderer(u32 width, u32 height);
   ~GLRenderer();
 
-  inline u32 GetWidth() const { return m_width; }
-  inline u32 GetHeight() const { return m_height; }
+  void Initialize();
+  
+  u32 GetWidth() const { return m_width; }
+  u32 GetHeight() const { return m_height; }
 
   void SetCameraPosition(glm::vec3 position) { m_camera.m_position = position; }
 
@@ -23,7 +25,6 @@ public:
 
   void Render();
 
-  void Initialize();
 private:
   void CreateModels();
 

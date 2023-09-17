@@ -63,7 +63,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
   W_CHECK(hWnd = CreateWin32Window(hInstance, glRenderer.get()));
 
   HDC hDC = GetDC(hWnd);
-  // Not sure whether we need global var for this one
+  
   Utility::Scope_guard const unbindOpenGLContextGuard = [&hWnd, &hDC] { UnbindOpenGLContext(hWnd, hDC, hglrc); };
   W_CHECK(hglrc = LoadAndBindOpenGLContext(hDC));
 
@@ -90,8 +90,6 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
     glRenderer->Render();
     SwapBuffers(hDC);
   }
-
-  // UnbindOpenGLContext(hWnd, hDC, hglrc);
 
   return static_cast<int>(msg.wParam);
 }

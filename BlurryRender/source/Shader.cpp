@@ -34,8 +34,8 @@ void Shader::Initialize(std::string vertexPath, std::string fragmentPath)
     infoLog.resize(InfoBufferSize);
     glGetProgramInfoLog(m_descriptor, InfoBufferSize, nullptr, infoLog.data());
 
-    std::string output = "";
-    output += "\Failed linkage of GLSL shaders into a shader program." + '\n';
+    std::string output{};
+    output += "Failed linkage of GLSL shaders into a shader program.\n";
     output += "Program info log:\n" + infoLog + '\n';
     OutputDebugStringA(output.c_str());
   }
@@ -65,7 +65,7 @@ GLuint Shader::CreateShader(std::string shaderPath, unsigned int type)
     glGetShaderInfoLog(shader, InfoBufferSize, nullptr, infoLog.data());
     const std::string shaderTypeStr = (type == GL_VERTEX_SHADER) ? "vertex" : "fragment";
     std::string output = "";
-    output += "\GLSL compile error" + shaderTypeStr + " shader: '" + shaderPath + "'\n\n";
+    output += "GLSL compile error" + shaderTypeStr + " shader: '" + shaderPath + "'\n\n";
     output += "Shader info log:\n" + infoLog + '\n';
     OutputDebugStringA(output.c_str());
   }
