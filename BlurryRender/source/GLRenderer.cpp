@@ -29,7 +29,7 @@ constexpr auto BackgroundTexturePath = "resources/textures/back.jpg";
 constexpr auto GradientMaskTexturePath = "resources/textures/gradient_mask.png";
 }// namespace
 
-GLRenderer::GLRenderer(u32 width, u32 height) : m_width(width), m_height(height), m_camera() {}
+GLRenderer::GLRenderer(u32 width, u32 height) : m_width{ width }, m_height{ height }, m_camera{} {}
 
 void GLRenderer::Initialize()
 {
@@ -179,11 +179,12 @@ void GLRenderer::RenderScene()
   const float camZ = cos(Utility::seconds_now() * rotationSpeed) * rotationRadius;
   glm::mat4 view = m_camera.LookAt(glm::vec3(camX, 0.0, camZ));
 
-  glm::mat4 projection = glm::perspective(glm::radians(m_camera.Zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
+  glm::mat4 projection =
+    glm::perspective(glm::radians(m_camera.m_zoom), (float)m_width / (float)m_height, 0.1f, 100.0f);
   m_sceneShader.setUniform("view", view);
   m_sceneShader.setUniform("projection", projection);
   m_sceneShader.setUniform("light.position", m_lightPosition);
-  m_sceneShader.setUniform("viewPos", m_camera.Position);
+  m_sceneShader.setUniform("viewPos", m_camera.m_position);
 
   // cubes
   glBindVertexArray(m_cube.VAO);
@@ -286,42 +287,46 @@ GLRenderer::~GLRenderer()
 
 void GLRenderer::OnKeyDown(u32 key)
 {
+  constexpr float CameraMoveDelta = 0.1f;
+  constexpr u32 BlurPassesDelta = 1;
+  constexpr float BlurSigmaDelta = 0.1f;
+
   switch (key)
   {
   case 'W': {
-    m_camera.ProcessKeyboard(FORWARD, 0.1);
+    m_camera.ProcessKeyboard(CameraMove::Forward, CameraMoveDelta);
   }
   break;
   case 'A': {
-    m_camera.ProcessKeyboard(LEFT, 0.1);
+    m_camera.ProcessKeyboard(CameraMove::Left, CameraMoveDelta);
   }
   break;
   case 'S': {
-    m_camera.ProcessKeyboard(BACKWARD, 0.1);
+    m_camera.ProcessKeyboard(CameraMove::Backward, CameraMoveDelta);
   }
   break;
   case 'D': {
-    m_camera.ProcessKeyboard(RIGHT, 0.1);
+    m_camera.ProcessKeyboard(CameraMove::Right, CameraMoveDelta);
   }
   break;
 
   case '1': {
-    m_blurPasses -= 1;
+    m_blurPasses -= BlurPassesDelta;
   }
   break;
 
   case '2': {
-    m_blurPasses += 1;
+    m_blurPasses += BlurPassesDelta;
   }
   break;
 
   case '3': {
-    m_blurSigma -= 0.1;
+    m_blurSigma -= BlurSigmaDelta;
   }
   break;
 
   case '4': {
-    m_blurSigma += 0.1;
+    m_blurSigma += BlurSigmaDelta;
   }
   break;
   }
