@@ -19,4 +19,12 @@ if %ERRORLEVEL% neq 0 (
 )
 echo vcpkg is installed.
 
+vcpkg install stb:x64-windows
+vcpkg install glm:x64-windows
+vcpkg install glfw3:x64-windows
+vcpkg install glad:x64-windows
+vcpkg install assimp:x64-windows
+
+vcpkg integrate install
+
 popd
