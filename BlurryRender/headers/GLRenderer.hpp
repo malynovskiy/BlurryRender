@@ -19,7 +19,7 @@ public:
   u32 GetWidth() const { return m_width; }
   u32 GetHeight() const { return m_height; }
 
-  void SetCameraPosition(glm::vec3 position) { m_camera.m_position = position; }
+  void SetCameraPosition(const glm::vec3 position) { m_camera.SetPosition(position); }
 
   void OnKeyDown(u32 key);
 

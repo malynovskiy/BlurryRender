@@ -32,23 +32,6 @@ constexpr glm::vec3 DefaultFront{ 0.0f, 0.0f, -1.0f };
 class Camera
 {
 public:
-  // camera Attributes
-  glm::vec3 m_position;
-  glm::vec3 m_front;
-  glm::vec3 m_up;
-  glm::vec3 m_right;
-  glm::vec3 m_worldUp;
-
-  // euler Angles
-  float m_yaw;
-  float m_pitch;
-
-  // camera options
-  float m_movementSpeed;
-  float m_mouseSensitivity;
-  float m_zoom;
-
-  // constructor with vectors
   Camera(glm::vec3 position = Zero)
     : m_position{ position },
       m_front{ DefaultFront },
@@ -63,7 +46,6 @@ public:
     UpdateCameraVectors();
   }
 
-  // constructor with scalar values
   Camera(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch)
     : m_position{ glm::vec3(posX, posY, posZ) },
       m_front{ DefaultFront },
@@ -76,6 +58,8 @@ public:
   {
     UpdateCameraVectors();
   }
+
+  void SetPosition(const glm::vec3 position) { m_position = position; }
 
   // returns the view matrix calculated using Euler Angles and the LookAt Matrix
   glm::mat4 GetViewMatrix() { return glm::lookAt(m_position, m_position + m_front, m_up); }
@@ -144,5 +128,22 @@ private:
                                                      // the more you look up or down which results in slower movement.
     m_up = glm::normalize(glm::cross(m_right, m_front));
   }
+
+public:
+  // camera Attributes
+  glm::vec3 m_position;
+  glm::vec3 m_front;
+  glm::vec3 m_up;
+  glm::vec3 m_right;
+  glm::vec3 m_worldUp;
+
+  // euler Angles
+  float m_yaw;
+  float m_pitch;
+
+  // camera options
+  float m_movementSpeed;
+  float m_mouseSensitivity;
+  float m_zoom;
 };
 #endif
