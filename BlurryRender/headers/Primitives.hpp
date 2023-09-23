@@ -1,18 +1,19 @@
 #pragma once
 #include <vector>
 
-using UINT = unsigned int;
+namespace
+{
+constexpr uint32_t PositionAttrib = 3;
+constexpr uint32_t PositionTextureAttrib = 5;
+constexpr uint32_t PositionNormalTextureAttrib = 8;
 
-constexpr UINT PositionAttrib = 3;
-constexpr UINT PositionTextureAttrib = 5;
-constexpr UINT PositionNormalTextureAttrib = 8;
+constexpr uint32_t CubeVerticesAmount = 36;
+constexpr uint32_t PlaneVerticesAmount = 6;
 
-constexpr UINT CubeVerticesAmount = 36;
-constexpr UINT PlaneVerticesAmount = 6;
-
-constexpr UINT PositionVertexAttribute = 0;
-constexpr UINT NormalVertexAttribute = 1;
-constexpr UINT TextureCoordVertexAttribute = 2;
+constexpr uint32_t PositionVertexAttribute = 0;
+constexpr uint32_t NormalVertexAttribute = 1;
+constexpr uint32_t TextureCoordVertexAttribute = 2;
+}// namespace
 
 class Primitive
 {
@@ -24,11 +25,7 @@ public:
   };
 
   Primitive() : vertices(0), VAO(0), VBO(0) {}
-  Primitive(std::vector<float> Vertices, UINT vertexAttributes = PositionTexture) : vertices(Vertices), VAO(0), VBO(0)
-  {
-    setupMesh(vertexAttributes);
-  }
-  Primitive(const float *Vertices, UINT number, UINT vertexAttributes = PositionTexture)
+  Primitive(const float *Vertices, uint32_t number, VertexAttributeStructure vertexAttributes = PositionTexture)
     : vertices(Vertices, Vertices + number), VAO(0), VBO(0)
   {
     setupMesh(vertexAttributes);
@@ -37,7 +34,7 @@ public:
   virtual ~Primitive() = default;
 
 private:
-  virtual void setupMesh(UINT vertexAttributes)
+  virtual void setupMesh(VertexAttributeStructure vertexAttributes)
   {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -46,15 +43,15 @@ private:
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
-    const bool isNormals = vertexAttributes == PositionNormalTexture;
-    const UINT vertexAttributesCount = !isNormals ? PositionTextureAttrib : PositionNormalTextureAttrib;
+    const bool containNormals = vertexAttributes == PositionNormalTexture;
+    const uint32_t vertexAttributesCount = !containNormals ? PositionTextureAttrib : PositionNormalTextureAttrib;
 
     // vertex Positions
     glEnableVertexAttribArray(PositionVertexAttribute);
     glVertexAttribPointer(
       PositionVertexAttribute, 3, GL_FLOAT, GL_FALSE, sizeof(float) * vertexAttributesCount, (void *)0);
 
-    if (isNormals)
+    if (containNormals)
     {
       glEnableVertexAttribArray(NormalVertexAttribute);
       glVertexAttribPointer(NormalVertexAttribute,
@@ -72,12 +69,12 @@ private:
       GL_FLOAT,
       GL_FALSE,
       sizeof(float) * vertexAttributesCount,
-      (void *)((isNormals ? 6 : 3) * sizeof(float)));
+      (void *)((containNormals ? 6 : 3) * sizeof(float)));
     glBindVertexArray(0);
   }
 
 public:
-  UINT VAO, VBO;
+  uint32_t VAO, VBO;
   std::vector<float> vertices;
 };
 
@@ -85,11 +82,10 @@ class LightPrimitive : public Primitive
 {
 public:
   LightPrimitive() : Primitive() {}
-  LightPrimitive(std::vector<float> Vertices) : Primitive(Vertices, PositionNormalTexture) {}
-  LightPrimitive(const float *Vertices, UINT number) : Primitive(Vertices, number, PositionNormalTexture) {}
+  LightPrimitive(const float *Vertices, uint32_t number) : Primitive(Vertices, number, PositionNormalTexture) {}
 
 private:
-  void setupMesh(UINT vertexAttributes) override
+  void setupMesh(VertexAttributeStructure vertexAttributes) override
   {
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);

@@ -8,7 +8,7 @@
 #include <iostream>
 #include <Windows.h>
 
-inline constexpr UINT InfoBufferSize = 512;
+inline constexpr uint32_t InfoBufferSize = 512;
 
 Shader::Shader(std::string vertexPath, std::string fragmentPath) : m_descriptor(0)
 {

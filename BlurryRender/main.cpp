@@ -20,15 +20,15 @@ using U32 = unsigned int;
 constexpr auto AppName = L"BlurryRender";
 constexpr auto AppClassName = L"Win32BlurryRender";
 
-constexpr UINT WindowWidth = 1920;
-constexpr UINT WindowHeight = 1080;
+constexpr uint32_t WindowWidth = 1920;
+constexpr uint32_t WindowHeight = 1080;
 
 RECT windowRect;
 HGLRC hglrc;
 
 namespace
 {
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+LRESULT CALLBACK WndProc(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam);
 
 void CreateWin32Context(HINSTANCE hInstance);
 HWND CreateWin32Window(HINSTANCE hInstance, GLRenderer *renderer);
@@ -96,7 +96,7 @@ int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int n
 
 namespace
 {
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam)
 {
   GLRenderer *renderer = reinterpret_cast<GLRenderer *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 

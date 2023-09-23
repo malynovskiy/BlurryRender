@@ -7,6 +7,7 @@ class Shader
 public:
   Shader() = default;
   Shader(std::string vertexPath, std::string fragmentPath);
+
   ~Shader() = default;
 
   void use();

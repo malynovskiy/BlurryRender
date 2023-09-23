@@ -29,7 +29,15 @@ constexpr auto BackgroundTexturePath = "resources/textures/back.jpg";
 constexpr auto GradientMaskTexturePath = "resources/textures/gradient_mask.png";
 }// namespace
 
-GLRenderer::GLRenderer(u32 width, u32 height) : m_width{ width }, m_height{ height }, m_camera{} {}
+GLRenderer::GLRenderer(u32 width, u32 height)
+  : m_width{ width },
+    m_height{ height },
+    m_postProcessingBlur{ true },
+    m_horizontal{ true },
+    m_blurSigma{ 0.4f },
+    m_blurPasses{ 25 }
+{
+}
 
 void GLRenderer::Initialize()
 {

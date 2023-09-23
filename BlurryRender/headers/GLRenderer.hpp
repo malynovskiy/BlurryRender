@@ -48,8 +48,8 @@ private:
   Shader m_lightSourceShader;
   Shader m_composeShader;
 
-  bool m_postProcessingBlur = true;
-  bool m_horizontal = true;
+  bool m_postProcessingBlur;
+  bool m_horizontal;
 
   u32 m_sceneFBO;
   u32 m_sceneColorBuffer;
@@ -57,8 +57,8 @@ private:
   std::array<u32, BlurFramebuffersCount> m_blurFBO;
   std::array<u32, BlurFramebuffersCount> m_blurColorBuffers;
 
-  float m_blurSigma = 0.4f;
-  u32 m_blurPasses = 25;
+  float m_blurSigma;
+  u32 m_blurPasses;
 
   // Probably should be some vector with primitives for more extensive usage
   Primitive m_cube;
